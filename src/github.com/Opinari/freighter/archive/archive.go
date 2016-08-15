@@ -1,13 +1,11 @@
 package archive
 
 import (
-	_ "archive/tar"
 	"log"
 	"archive/tar"
 	"io/ioutil"
 	"fmt"
 	"io"
-	_ "os"
 	"bytes"
 	"os"
 )
@@ -56,19 +54,20 @@ func UnarchiveFile(inputFilePath string, outputDirPath string) (unarchiveDirPath
 		// Write out the damn file or folder
 		uncompressedFilePath := outputDirPath + "/" + fileHeader.Name
 
-
 		switch fileHeader.Typeflag {
 
 		case tar.TypeDir:
-			log.Printf("Folder name %s \n", uncompressedFilePath)
-			os.MkdirAll(uncompressedFilePath, 666)
+			log.Printf("Unarchiving folder: %s \n", uncompressedFilePath)
+			os.MkdirAll(uncompressedFilePath, 0755)
 
 		case tar.TypeReg:
-			log.Printf("File name %s \n", uncompressedFilePath)
+			log.Printf("Unarchiving file: %s \n", uncompressedFilePath)
 			fileWriter, _ := os.Create(uncompressedFilePath)
 			if _, err := io.Copy(fileWriter, tarReader); err != nil {
-				return "", fmt.Errorf("Error occured whilst unarchiving files: %s", err.Error())
+				return "", fmt.Errorf("Error occured whilst unarchiving file: %s", err.Error())
 			}
+		default:
+			return "", fmt.Errorf("Unexpected File Type '%s' whilst unarchiving file: '%s'", fileHeader.Typeflag, fileHeader.Name)
 		}
 	}
 

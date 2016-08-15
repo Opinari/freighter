@@ -65,6 +65,9 @@ func runCLI() {
 // TODO The below should be moved into a different file, behind an interface if possible
 func restoreFile(restoreFilePath string, remoteFilePath string) {
 
+	// Create Restore File Path
+	os.MkdirAll(restoreFilePath, 0755)
+
 	//  Download File
 	downloadedFilePath, err := dropbox.DownloadFile(restoreFilePath, remoteFilePath)
 	if err != nil {
@@ -83,6 +86,9 @@ func restoreFile(restoreFilePath string, remoteFilePath string) {
 		log.Fatal(err)
 	}
 
+	// Cleanup tmp Compressed and Archived files
+	os.Remove(downloadedFilePath)
+	os.Remove(compressedFile)
 }
 
 func backupFile(archiveDir string, backupFilePath string, remoteFilePath string) {
