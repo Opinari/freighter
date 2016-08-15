@@ -2,8 +2,25 @@ package dropbox
 
 import "testing"
 
-func TestFoobar(t *testing.T) {
+type Test struct {
+	restoreFilePath          string
+	remoteFilePath           string
+	expectedDownloadFilePath string
+}
 
+var tests = []Test{
+	{"/foo/bar", "/bar.tar.gz", "/foo/bar"},
+}
 
+// FIXME write these tests properly
+func TestDownloadFile(t *testing.T) {
+
+	for _, test := range tests {
+		_, err := DownloadFile(test.restoreFilePath, test.remoteFilePath)
+
+		if err.Error() != "foo" {
+			t.Fail()
+		}
+	}
 
 }
