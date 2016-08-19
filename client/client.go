@@ -1,4 +1,4 @@
-package freighter
+package client
 
 import (
 	"log"
@@ -8,7 +8,7 @@ import (
 	"github.com/Opinari/freighter/dropbox"
 )
 
-func restoreFile(restoreFilePath string, remoteFilePath string) {
+func RestoreFile(restoreFilePath string, remoteFilePath string) {
 
 	// Create Restore File Path
 	os.MkdirAll(restoreFilePath, 0755)
@@ -37,7 +37,7 @@ func restoreFile(restoreFilePath string, remoteFilePath string) {
 }
 
 // TODO WIP
-func backupFile(archiveDir string, backupFilePath string, remoteFilePath string) {
+func BackupFile(archiveDir string, backupFilePath string, remoteFilePath string) {
 
 	// Archive File
 	archivedFile := archive.ArchiveFile(archiveDir, backupFilePath + ".tar")
@@ -55,10 +55,10 @@ func backupFile(archiveDir string, backupFilePath string, remoteFilePath string)
 	log.Printf("File was uploaded to: '%s'", uploadedFile)
 }
 
-func ageRemoteFile(outputDir string, remoteFilePath string) {
+func AgeRemoteFile(outputDir string, remoteFilePath string) {
 
 }
 
-func deleteRemoteFile(remoteFilePath string) {
+func DeleteRemoteFile(remoteFilePath string) {
 
 }

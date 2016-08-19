@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"freighter"
+	"github.com/Opinari/freighter/client"
 )
 
 func init() {
@@ -42,7 +42,7 @@ func runCLI() {
 	case "restore":
 		log.Println("Performing Restore")
 		if (restoreFilePath != "" && remoteFilePath != "") {
-			freighter.restoreFile(restoreFilePath, remoteFilePath)
+			client.RestoreFile(restoreFilePath, remoteFilePath)
 		} else {
 			fmt.Println("Required options for restore operation:")
 			subCmdFlagSet.PrintDefaults();

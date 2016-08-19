@@ -1,4 +1,4 @@
-package freighter
+package client
 
 import "testing"
 
