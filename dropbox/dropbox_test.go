@@ -22,5 +22,4 @@ func IgnoreTestDownloadFile(t *testing.T) {
 			t.Fail()
 		}
 	}
-
 }
