@@ -2,6 +2,6 @@ package compress
 
 import "testing"
 
-func TestFoobar(t *testing.T) {
+func IgnoreTestFoobar(t *testing.T) {
 
 }
