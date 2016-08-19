@@ -23,15 +23,20 @@ func main() {
 // TODO Make the CLI an instance and execute the args / flags upon it
 func runCLI() {
 
+	// Sub cmd parsing
+	if len(os.Args) < 2 {
+		log.Println("freighter: Provide at least one argument for operation")
+		log.Fatalln("See 'freighter --help' for more info \n")
+	}
+	operation := os.Args[1]
+
+
+	// Flag parsing
 	// Declare placeholder vars for opts
 	var remoteFilePath, restoreFilePath string
 
-	// Sub cmd arg parsing
-	operation := os.Args[1]
-
-	// Flag parsing
 	subCmdArgs := os.Args[2:]
-	subCmdFlagSet := flag.NewFlagSet("restore", flag.ErrorHandling(flag.ExitOnError))
+	subCmdFlagSet := flag.NewFlagSet("operationFlagset", flag.ErrorHandling(flag.ExitOnError))
 	subCmdFlagSet.StringVar(&remoteFilePath, "remotePath", "", "The remote file path to use within the operation")
 	subCmdFlagSet.StringVar(&restoreFilePath, "restoreFilePath", "", "The directory location of where to restore the file(s)")
 	subCmdFlagSet.Parse(subCmdArgs)
@@ -42,7 +47,8 @@ func runCLI() {
 		if (restoreFilePath != "" && remoteFilePath != "") {
 			restoreFile(restoreFilePath, remoteFilePath)
 		} else {
-			flag.Usage();
+			fmt.Println("Required options for restore operation:")
+			subCmdFlagSet.PrintDefaults();
 		}
 	case "backup":
 		log.Println("Performing Backup")
@@ -51,8 +57,8 @@ func runCLI() {
 	case "delete":
 		log.Println("Performing Delete")
 	default :
-		fmt.Fprintf(os.Stderr, "freighter: '%s' is not a valid freighter argument \n", operation)
-		fmt.Fprint(os.Stderr, "See 'freighter --help' for more info \n")
+		log.Printf("freighter: '%s' is not a valid freighter argument \n", operation)
+		log.Fatalln("See 'freighter --help' for more info \n")
 	}
 
 }

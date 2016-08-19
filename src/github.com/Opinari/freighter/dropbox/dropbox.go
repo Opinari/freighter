@@ -33,14 +33,14 @@ func DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePa
 
 
 	// Build http Request
-	request, err := http.NewRequest(http.MethodPost, dropboxAPI + downloadPath, nil)
+	request, _ := http.NewRequest(http.MethodPost, dropboxAPI + downloadPath, nil)
 	request.Header.Add("Authorization", "Bearer " + accessToken)
 
 
 	// Construct API File Path in required json format
 	type DropboxFilePath struct{ RemoteFilePath string `json:"path"` }
 	apiPath := DropboxFilePath{RemoteFilePath: remoteFilePath}
-	apiPathJsonBytes, err := json.Marshal(apiPath)
+	apiPathJsonBytes, _ := json.Marshal(apiPath)
 	apiPathJsonString := string(apiPathJsonBytes)
 	request.Header.Add(dropboxAPIArg, apiPathJsonString)
 
@@ -59,6 +59,9 @@ func DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePa
 	defer response.Body.Close()
 	if err != nil {
 		return "", fmt.Errorf("Error executing download request: %s", err.Error())
+	}
+	if response.StatusCode != 200 {
+		return "", fmt.Errorf("Error downloading file, statusCode: %d, status: %s", response.StatusCode, response.Status)
 	}
 
 
