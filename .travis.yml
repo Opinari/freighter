@@ -9,10 +9,6 @@ language: go
 go:
   - 1.6.3
 
-os:
-  - linux
-  - osx
-
 after_success:
 
   - if [ $TRAVIS_BRANCH == 'master' ]; then
