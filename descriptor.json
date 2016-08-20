@@ -2,7 +2,7 @@
   "package": {
     "name": "freighter",
     "repo": "Go-Distribution",
-    "subject": "Opinari"
+    "subject": "daves125125"
   },
   "version": {
     "name": "0.1",
@@ -14,7 +14,7 @@
   "files": [
     {
       "includePattern": "freighter",
-      "uploadPattern": "/$1"
+      "uploadPattern": "/freighter"
     }
   ],
   "publish": true
