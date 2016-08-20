@@ -2,6 +2,6 @@ package client
 
 import "testing"
 
-func IgnoreTestFoobar(t *testing.T) {
-
+func TestRestoreFile(t *testing.T) {
+	t.Skip("skipping test.")
 }

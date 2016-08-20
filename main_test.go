@@ -1,7 +1,8 @@
-package main
+package main_test
 
 import "testing"
 
-func IgnoreTestFoobar(t *testing.T) {
 
+func TestCLI(t *testing.T) {
+	t.Skip("skipping test.")
 }

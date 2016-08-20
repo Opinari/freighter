@@ -22,12 +22,11 @@ func init() {
 	if accessToken == "" {
 		accessToken = os.Getenv("ACCESS_TOKEN")
 	}
-	if accessToken == "" {
-		log.Fatalln("Error: No Access token provided for storage provider dropbox")
-	}
 }
 
 func DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePath string, err error) {
+
+	checkToken();
 
 	log.Printf("Downloading file from: '%s' to: '%s'", remoteFilePath, restoreFilePath)
 
@@ -91,6 +90,15 @@ func DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePa
 // TODO NO-OP
 func UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath string, err error) {
 
+	checkToken()
+
 	log.Printf("Uploading File from: '%s' to: '%s' ", backupFilePath, remoteFilePath)
 	return
+}
+
+
+func checkToken(){
+	if accessToken == "" {
+		log.Fatalln("Error: No Access token provided for storage provider dropbox")
+	}
 }

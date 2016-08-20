@@ -2,6 +2,6 @@ package archive
 
 import "testing"
 
-func IgnoreTestFoobar(t *testing.T) {
-
+func TestUnarchiveFile(t *testing.T) {
+	t.Skip("skipping test.")
 }

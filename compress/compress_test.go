@@ -2,6 +2,6 @@ package compress
 
 import "testing"
 
-func IgnoreTestFoobar(t *testing.T) {
-
+func TestUncompressFile(t *testing.T) {
+	t.Skip("skipping test.")
 }

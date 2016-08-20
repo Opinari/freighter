@@ -13,9 +13,12 @@ var tests = []Test{
 }
 
 // FIXME write these tests properly
-func IgnoreTestDownloadFile(t *testing.T) {
+func TestDownloadFile(t *testing.T) {
+
+	t.Skip("skipping test.")
 
 	for _, test := range tests {
+
 		_, err := DownloadFile(test.restoreFilePath, test.remoteFilePath)
 
 		if err.Error() != "foo" {
