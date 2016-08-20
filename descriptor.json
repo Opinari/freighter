@@ -1,0 +1,21 @@
+{
+  "package": {
+    "name": "freighter",
+    "repo": "Go-Distribution",
+    "subject": "Opinari"
+  },
+  "version": {
+    "name": "0.1",
+    "desc": "Freighter v0.1",
+    "released": "2016-08-20",
+    "vcs_tag": "0.1",
+    "gpgSign": false
+  },
+  "files": [
+    {
+      "includePattern": "freighter",
+      "uploadPattern": "/$1"
+    }
+  ],
+  "publish": true
+}
