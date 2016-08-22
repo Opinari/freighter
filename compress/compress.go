@@ -3,9 +3,10 @@ package compress
 import (
 	"compress/gzip"
 	"log"
-	"io/ioutil"
 	"fmt"
-	"bytes"
+	"bufio"
+	"os"
+	"io"
 )
 
 // TODO Fix this
@@ -24,39 +25,49 @@ func UncompressFile(compressedFilePath string, outputDirPath string) (uncompress
 
 	log.Printf("Uncompressing file from: %s to: %s", compressedFilePath, outputDirPath)
 
-	// Read in compressed file from path
-	compressedFile, err := ioutil.ReadFile(compressedFilePath)
+	// Open compressed file
+	compressedFile, err := os.Open(compressedFilePath)
 	if err != nil {
 		return "", fmt.Errorf("Error occured finding compressed file: %s", err.Error())
+
 	}
+	defer compressedFile.Close()
 
 
-	// Go from bytes > Reader
-	// FIXME Do we really need this?
-	bytesReader := bytes.NewReader(compressedFile)
-
-
-	// Uncompress
-	gzipReader, err := gzip.NewReader(bytesReader)
-	gzipReader.Close()
-
-
-	// Go from Reader > bytes
-	// FIXME Do we really need this?
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(gzipReader)
-	uncompressedFileBytes := buf.Bytes()
-
-
-	// TODO defer file close?
-	// TODO Parse filename
-	// Write response to file
-	uncompressedFilePath := outputDirPath + tmpUncompressedFileName
-	err = ioutil.WriteFile(uncompressedFilePath, uncompressedFileBytes, 0644)
+	// Open GzipReader
+	gzipReader, err := gzip.NewReader(bufio.NewReader(compressedFile))
 	if err != nil {
 		return "", fmt.Errorf("Error occured during uncompression of file: %s", err.Error())
-	}
 
+	}
+	defer gzipReader.Close()
+
+
+	// Open uncompressed file to write to
+	uncompressedFilePath := outputDirPath + tmpUncompressedFileName
+	uncompressedFile, err := os.Create(uncompressedFilePath)
+	if err != nil {
+		return "", fmt.Errorf("Error creating uncompressed file: %s", err.Error())
+	}
+	defer uncompressedFile.Close()
+
+	writer := bufio.NewWriter(uncompressedFile)
+	buffer := make([]byte, 4096)
+	for {
+		n, err := gzipReader.Read(buffer)
+		if err != nil && err != io.EOF {
+			return "", fmt.Errorf("Error occured during reading compressed file: %s", err.Error())
+		}
+
+		if n == 0 {
+			break
+		}
+
+		_, err = writer.Write(buffer[:n])
+		if err != nil {
+			return "", fmt.Errorf("Error writing uncompressed file: %s", err.Error())
+		}
+	}
 
 	log.Printf("Uncompressed file successfully to: %s", uncompressedFilePath)
 
