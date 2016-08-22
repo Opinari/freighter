@@ -69,6 +69,18 @@ func UncompressFile(compressedFilePath string, outputDirPath string) (uncompress
 		}
 	}
 
+	err = writer.Flush()
+	if err != nil {
+		return "", fmt.Errorf("Error flushing to uncompressed file: %s", err.Error())
+
+	}
+
+	// TODO Doing a double close here
+	err = uncompressedFile.Close()
+	if err != nil {
+		return "", fmt.Errorf("Error closing uncompressed file: %s", err.Error())
+	}
+
 	log.Printf("Uncompressed file successfully to: %s", uncompressedFilePath)
 
 	uncompressDirPath = uncompressedFilePath
