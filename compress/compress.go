@@ -84,5 +84,5 @@ func UncompressFile(compressedFilePath string, outputDirPath string) (uncompress
 	log.Printf("Uncompressed file successfully to: %s", uncompressedFilePath)
 
 	uncompressDirPath = uncompressedFilePath
-	return nil
+	return
 }
