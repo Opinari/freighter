@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"github.com/Opinari/freighter/client"
+	"github.com/opinari/freighter/client"
 	_ "net/http/pprof"
 	"net/http"
 )

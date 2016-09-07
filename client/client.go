@@ -3,9 +3,9 @@ package client
 import (
 	"log"
 	"os"
-	"github.com/Opinari/freighter/archive"
-	"github.com/Opinari/freighter/compress"
-	"github.com/Opinari/freighter/dropbox"
+	"github.com/opinari/freighter/archive"
+	"github.com/opinari/freighter/compress"
+	"github.com/opinari/freighter/dropbox"
 )
 
 func RestoreFile(restoreFilePath string, remoteFilePath string) {
