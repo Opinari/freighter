@@ -118,7 +118,6 @@ func UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath st
 	tmpRemotePath := remoteFilePath + ".tmp"
 
 
-	//
 	log.Printf("Uploading new tmp file from: '%s' to: '%s' ", backupFilePath, tmpRemotePath)
 	uploadFile(backupFilePath, tmpRemotePath)
 	log.Printf("File was succesfully uploaded to: '%s'", tmpRemotePath)
@@ -127,7 +126,6 @@ func UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath st
 	archiveRemotePath := remoteFilePath + "-" + instant
 
 
-	//
 	log.Printf("Archiving old backup from: '%s' to: '%s' ", remoteFilePath, archiveRemotePath)
 	_, err = moveFile(remoteFilePath, archiveRemotePath)
 	if err != nil {
@@ -136,7 +134,7 @@ func UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath st
 		log.Printf("File was succesfully moved to: '%s'", archiveRemotePath)
 	}
 
-	//
+
 	log.Printf("Setting primary from: '%s' to: '%s' ", tmpRemotePath, remoteFilePath)
 	_, err = moveFile(tmpRemotePath, remoteFilePath)
 	if err != nil {
