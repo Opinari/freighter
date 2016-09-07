@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"github.com/Opinari/freighter/client"
+	"github.com/opinari/freighter/client"
+	_ "net/http/pprof"
+	"net/http"
 )
 
 func init() {
@@ -13,6 +15,7 @@ func init() {
 }
 
 func main() {
+	go http.ListenAndServe(":8080", http.DefaultServeMux)
 	showBanner()
 	runCLI();
 }
@@ -30,12 +33,13 @@ func runCLI() {
 
 	// Flag parsing
 	// Declare placeholder vars for opts
-	var remoteFilePath, restoreFilePath string
+	var remoteFilePath, restoreFilePath, backupFilePath string
 
 	subCmdArgs := os.Args[2:]
 	subCmdFlagSet := flag.NewFlagSet("operationFlagset", flag.ErrorHandling(flag.ExitOnError))
 	subCmdFlagSet.StringVar(&remoteFilePath, "remotePath", "", "The remote file path to use within the operation")
 	subCmdFlagSet.StringVar(&restoreFilePath, "restoreFilePath", "", "The directory location of where to restore the file(s)")
+	subCmdFlagSet.StringVar(&backupFilePath, "backupFilePath", "", "The path to the directory of which to backup")
 	subCmdFlagSet.Parse(subCmdArgs)
 
 	switch operation {
@@ -49,6 +53,12 @@ func runCLI() {
 		}
 	case "backup":
 		log.Println("Performing Backup")
+		if (backupFilePath != "" && remoteFilePath != "") {
+			client.BackupDirectory(backupFilePath, remoteFilePath)
+		} else {
+			fmt.Println("Required options for backup operation:")
+			subCmdFlagSet.PrintDefaults();
+		}
 	case "age":
 		log.Println("Performing Age Check")
 	case "delete":

@@ -6,31 +6,94 @@ import (
 	"io/ioutil"
 	"fmt"
 	"io"
-	"bytes"
 	"os"
+	"path/filepath"
+	"bufio"
 )
 
-// TODO NO-OP
-func ArchiveFile(inputDirPath string, outputFilePath string) (archivedFilePath string) {
+func Archive(inputDirPath string, outputFilePath string) (archivedFilePath string, err error) {
 
 	log.Printf("Archiving files from: %s to: %s", inputDirPath, outputFilePath)
+
+
+	// Create output file (tar)
+	tarFile, err := os.Create(outputFilePath)
+	if err != nil {
+		return "", fmt.Errorf("Error occured opening output tar file: %s", err.Error())
+	}
+
+
+	// Create a new tar writer
+	tarWriter := tar.NewWriter(tarFile)
+	defer tarWriter.Close()
+
+
+	// Recurse through the input root directory, adding each file / folder to the archive
+	err = filepath.Walk(inputDirPath, func(filePath string, fileInfo os.FileInfo, err error) error {
+
+		if err != nil {
+			return fmt.Errorf("Error parsing input directory: %s", err.Error())
+		}
+
+		// Build file header
+		fileHeader, err := tar.FileInfoHeader(fileInfo, "")
+		if err != nil {
+			return fmt.Errorf("Error reading file header: %s", err.Error())
+		}
+
+		fileHeader.Name, err = filepath.Rel(inputDirPath, filePath)
+		if err != nil {
+			return fmt.Errorf("Error determining file archive path: %s", err.Error())
+		}
+
+
+		// Write Header
+		log.Printf("Writing header entry with name: %s, size: %d", fileHeader.Name, fileHeader.Size)
+		if err := tarWriter.WriteHeader(fileHeader); err != nil {
+			return fmt.Errorf("Error occured writing file header: %s", err.Error())
+		}
+
+		if !fileInfo.IsDir() {
+
+			// Read file contents
+			fileBody, err := ioutil.ReadFile(filePath)
+			if err != nil {
+				return fmt.Errorf("Error occured reading file body: %s", err.Error())
+			}
+
+			// Write Body
+			if _, err := tarWriter.Write(fileBody); err != nil {
+				return fmt.Errorf("Error occured writing file body: %s", err.Error())
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return "", fmt.Errorf("Error processing files to archive: %s", err.Error())
+	}
+
+	log.Printf("Files were archived to: '%s'", outputFilePath)
 
 	archivedFilePath = outputFilePath
 	return
 }
 
-func UnarchiveFile(inputFilePath string, outputDirPath string) (unarchiveDirPath string, err error) {
+func Unarchive(inputFilePath string, outputDirPath string) (unarchiveDirPath string, err error) {
 
 	log.Printf("Unarchiving files from: %s to: %s", inputFilePath, outputDirPath)
 
-	// Read in archived file from path
-	archivedFileBytes, err := ioutil.ReadFile(inputFilePath)
+	// Open archived file
+	archivedFile, err := os.Open(inputFilePath)
 	if err != nil {
 		return "", fmt.Errorf("Error occured finding archived file: %s", err.Error())
 	}
+	defer archivedFile.Close()
+
 
 	// Create the tar reader
-	tarReader := tar.NewReader(bytes.NewReader(archivedFileBytes))
+	reader := bufio.NewReader(archivedFile)
+	tarReader := tar.NewReader(reader)
 
 	// Iterate through the files in the archive
 	for {
@@ -43,13 +106,13 @@ func UnarchiveFile(inputFilePath string, outputDirPath string) (unarchiveDirPath
 			log.Fatalln(err)
 		}
 
-		uncompressedFilePath := outputDirPath + "/" + fileHeader.Name
+		uncompressedFilePath := filepath.Join(outputDirPath, fileHeader.Name)
 
 		switch fileHeader.Typeflag {
 
 		case tar.TypeDir:
 			log.Printf("Unarchiving folder: %s \n", uncompressedFilePath)
-			err := os.MkdirAll(uncompressedFilePath, 0755)
+			err := os.MkdirAll(uncompressedFilePath, 0666)
 			if err != nil {
 				return "", fmt.Errorf("Error occured whilst unarchiving folder: %s", err.Error())
 			}

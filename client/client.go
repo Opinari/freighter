@@ -3,15 +3,15 @@ package client
 import (
 	"log"
 	"os"
-	"github.com/Opinari/freighter/archive"
-	"github.com/Opinari/freighter/compress"
-	"github.com/Opinari/freighter/dropbox"
+	"github.com/opinari/freighter/archive"
+	"github.com/opinari/freighter/compress"
+	"github.com/opinari/freighter/dropbox"
 )
 
 func RestoreFile(restoreFilePath string, remoteFilePath string) {
 
 	// Create Restore File Path
-	os.MkdirAll(restoreFilePath, 0755)
+	os.MkdirAll(restoreFilePath, 0666)
 
 	//  Download File
 	downloadedFilePath, err := dropbox.DownloadFile(restoreFilePath, remoteFilePath)
@@ -26,33 +26,39 @@ func RestoreFile(restoreFilePath string, remoteFilePath string) {
 	}
 
 	// Unarchive Files
-	_, err = archive.UnarchiveFile(compressedFile, restoreFilePath)
+	_, err = archive.Unarchive(compressedFile, restoreFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Cleanup tmp Compressed and Archived files
+	// Cleanup tmp Downloaded and Uncompressed files
 	os.Remove(downloadedFilePath)
 	os.Remove(compressedFile)
 }
 
-// TODO WIP
-func BackupFile(archiveDir string, backupFilePath string, remoteFilePath string) {
+func BackupDirectory(backupFilePath string, remoteFilePath string) {
 
-	// Archive File
-	archivedFile := archive.ArchiveFile(archiveDir, backupFilePath + ".tar")
-	log.Printf("Files were archived to: '%s'", archivedFile)
+	// Archive Files
+	archivedFilePath, err := archive.Archive(backupFilePath, backupFilePath + ".tar")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Compress File
-	compressedFile := compress.CompressFile(archivedFile, archivedFile + ".gz")
-	log.Printf("File was compressed to: '%s'", compressedFile)
+	compressedFilePath, err := compress.CompressFile(archivedFilePath, archivedFilePath + ".gz")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Upload File
-	uploadedFile, err := dropbox.UploadFile(backupFilePath, remoteFilePath)
+	_, err = dropbox.UploadFile(compressedFilePath, remoteFilePath)
 	if err != nil {
-		panic("Done For!")
+		log.Fatal(err)
 	}
-	log.Printf("File was uploaded to: '%s'", uploadedFile)
+
+	// Cleanup tmp Archived and Compressed files
+	os.Remove(archivedFilePath)
+	os.Remove(compressedFilePath)
 }
 
 func AgeRemoteFile(outputDir string, remoteFilePath string) {
