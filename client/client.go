@@ -6,6 +6,8 @@ import (
 	"github.com/opinari/freighter/archive"
 	"github.com/opinari/freighter/compress"
 	"github.com/opinari/freighter/dropbox"
+	"io/ioutil"
+	"strconv"
 )
 
 func RestoreFile(restoreFilePath string, remoteFilePath string) {
@@ -61,10 +63,34 @@ func BackupDirectory(backupFilePath string, remoteFilePath string) {
 	os.Remove(compressedFilePath)
 }
 
-func AgeRemoteFile(outputDir string, remoteFilePath string) {
+func AgeRemoteFile(outputFilePath string, remoteFilePath string) {
+
+	// Perform age lookup
+	age, err := dropbox.AgeFile(remoteFilePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Create and open the output file for writing
+	outputFile, err := os.Create(outputFilePath)
+	defer outputFile.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Write out age value to file
+	ageBytes := []byte(strconv.Itoa(age))
+	if err := ioutil.WriteFile(outputFilePath, ageBytes, 0666); err != nil {
+		log.Fatal(err)
+	}
 
 }
 
 func DeleteRemoteFile(remoteFilePath string) {
+
+	err := dropbox.DeleteFile(remoteFilePath)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 }
