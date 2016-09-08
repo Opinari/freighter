@@ -33,13 +33,14 @@ func runCLI() {
 
 	// Flag parsing
 	// Declare placeholder vars for opts
-	var remoteFilePath, restoreFilePath, backupFilePath string
+	var remoteFilePath, restoreFilePath, backupFilePath, ageOutputFilePath string
 
 	subCmdArgs := os.Args[2:]
 	subCmdFlagSet := flag.NewFlagSet("operationFlagset", flag.ErrorHandling(flag.ExitOnError))
-	subCmdFlagSet.StringVar(&remoteFilePath, "remotePath", "", "The remote file path to use within the operation")
+	subCmdFlagSet.StringVar(&remoteFilePath, "remoteFilePath", "", "The remote file path to use within the operation")
 	subCmdFlagSet.StringVar(&restoreFilePath, "restoreFilePath", "", "The directory location of where to restore the file(s)")
 	subCmdFlagSet.StringVar(&backupFilePath, "backupFilePath", "", "The path to the directory of which to backup")
+	subCmdFlagSet.StringVar(&ageOutputFilePath, "ageOutputFilePath", "", "The path to the directory of which to backup")
 	subCmdFlagSet.Parse(subCmdArgs)
 
 	switch operation {
@@ -61,8 +62,20 @@ func runCLI() {
 		}
 	case "age":
 		log.Println("Performing Age Check")
+		if (ageOutputFilePath != "" && remoteFilePath != "") {
+			client.AgeRemoteFile(ageOutputFilePath, remoteFilePath)
+		} else {
+			fmt.Println("Required options for age operation:")
+			subCmdFlagSet.PrintDefaults();
+		}
 	case "delete":
 		log.Println("Performing Delete")
+		if (remoteFilePath != "") {
+			client.DeleteRemoteFile(remoteFilePath)
+		} else {
+			fmt.Println("Required options for delete operation:")
+			subCmdFlagSet.PrintDefaults();
+		}
 	default :
 		log.Printf("freighter: '%s' is not a valid freighter argument \n", operation)
 		log.Fatalln("See 'freighter --help' for more info \n")

@@ -11,8 +11,8 @@ import (
 	"bufio"
 	"time"
 	"bytes"
+	"io/ioutil"
 )
-
 
 const dropboxAPI = "https://api.dropboxapi.com/2"
 const dropboxContentAPI = "https://content.dropboxapi.com/2"
@@ -22,8 +22,9 @@ const downloadPath = "/files/download"
 const tmpDownloadedFileName = "/tmp.tar.gz"
 
 const uploadPath = "/files/upload"
-
 const movePath = "/files/move"
+const metadataPath = "/files/get_metadata"
+const deletePath = "/files/delete"
 
 var accessToken string
 
@@ -34,11 +35,7 @@ func init() {
 	}
 }
 
-type DropboxDownloadOptions struct {
-	RemoteFilePath string `json:"path"`
-}
-
-type DropboxUploadOptions struct {
+type DropboxOptions struct {
 	RemoteFilePath string `json:"path"`
 }
 
@@ -55,7 +52,7 @@ func DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePa
 
 
 	// Construct API File Path in required json format
-	apiPath := DropboxDownloadOptions{RemoteFilePath: remoteFilePath}
+	apiPath := DropboxOptions{RemoteFilePath: remoteFilePath}
 	apiPathJsonBytes, _ := json.Marshal(apiPath)
 	apiPathJsonString := string(apiPathJsonBytes)
 
@@ -118,6 +115,7 @@ func UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath st
 	tmpRemotePath := remoteFilePath + ".tmp"
 
 
+	//
 	log.Printf("Uploading new tmp file from: '%s' to: '%s' ", backupFilePath, tmpRemotePath)
 	uploadFile(backupFilePath, tmpRemotePath)
 	log.Printf("File was succesfully uploaded to: '%s'", tmpRemotePath)
@@ -126,6 +124,7 @@ func UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath st
 	archiveRemotePath := remoteFilePath + "-" + instant
 
 
+	//
 	log.Printf("Archiving old backup from: '%s' to: '%s' ", remoteFilePath, archiveRemotePath)
 	_, err = moveFile(remoteFilePath, archiveRemotePath)
 	if err != nil {
@@ -135,6 +134,7 @@ func UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath st
 	}
 
 
+	//
 	log.Printf("Setting primary from: '%s' to: '%s' ", tmpRemotePath, remoteFilePath)
 	_, err = moveFile(tmpRemotePath, remoteFilePath)
 	if err != nil {
@@ -143,6 +143,90 @@ func UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath st
 	log.Printf("Primary Backup File was succesfully set at: '%s'", remoteFilePath)
 
 	uploadFilePath = remoteFilePath
+	return
+}
+
+func DeleteFile(remoteFilePath string) (err error) {
+
+	checkToken()
+
+	// Construct API File Path in required json format
+	apiPath := DropboxOptions{RemoteFilePath: remoteFilePath}
+	apiPathJsonBytes, _ := json.Marshal(apiPath)
+	bodyReader := bytes.NewReader(apiPathJsonBytes)
+
+	// Build http Request
+	request, err := http.NewRequest(http.MethodPost, dropboxAPI + deletePath, bodyReader)
+	if err != nil {
+		return fmt.Errorf("Error occured building http request: %s", err.Error())
+	}
+	request.Header.Add("Authorization", "Bearer " + accessToken)
+	request.Header.Add("Content-Type", "application/json")
+
+
+	// Execute the http request
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return fmt.Errorf("Error executing delete request: %s", err.Error())
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		return fmt.Errorf("Error deleting file, statusCode: %d, status: %s", response.StatusCode, response.Status)
+	}
+
+	log.Printf("File: '%s' was succesfully deleted", remoteFilePath)
+
+	return
+}
+
+func AgeFile(remoteFilePath string) (ageOfFile int, err error) {
+
+	checkToken()
+
+	// Construct API File Path in required json format
+	apiPath := DropboxOptions{RemoteFilePath: remoteFilePath}
+	apiPathJsonBytes, _ := json.Marshal(apiPath)
+	bodyReader := bytes.NewReader(apiPathJsonBytes)
+
+	// Build http Request
+	request, err := http.NewRequest(http.MethodPost, dropboxAPI + metadataPath, bodyReader)
+	if err != nil {
+		return 0, fmt.Errorf("Error occured building http request: %s", err.Error())
+	}
+	request.Header.Add("Authorization", "Bearer " + accessToken)
+	request.Header.Add("Content-Type", "application/json")
+
+
+	// Execute the http request
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return 0, fmt.Errorf("Error executing age request: %s", err.Error())
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		return 0, fmt.Errorf("Error ageing file, statusCode: %d, status: %s", response.StatusCode, response.Status)
+	}
+
+	rawBody, err := ioutil.ReadAll(response.Body)
+
+	var body map[string]interface{}
+	if err := json.Unmarshal(rawBody, &body); err != nil {
+		panic(err)
+	}
+
+	lastModifiedDateString := body["server_modified"].(string)
+	log.Printf("Last modified date of file was: '%s' ", lastModifiedDateString)
+
+
+	// parse date
+	lastModifiedTime, err := time.Parse(time.RFC3339, lastModifiedDateString)
+	timeNow := time.Now().UTC();
+	timeDiffInDays := int(timeNow.Sub(lastModifiedTime.UTC()).Hours() / 24);
+	log.Printf("Age of file was: '%d' day(s) ", timeDiffInDays)
+
+	ageOfFile = timeDiffInDays
 	return
 }
 
@@ -177,7 +261,7 @@ func uploadFile(backupFilePath string, remoteFilePath string) (outputFilePath st
 
 
 	// Construct API File Path in required json format
-	apiPath := DropboxUploadOptions{RemoteFilePath: remoteFilePath}
+	apiPath := DropboxOptions{RemoteFilePath: remoteFilePath}
 	apiPathJsonBytes, _ := json.Marshal(apiPath)
 	apiPathJsonString := string(apiPathJsonBytes)
 
