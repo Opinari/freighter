@@ -126,7 +126,7 @@ func Unarchive(inputFilePath string, outputDirPath string) (unarchiveDirPath str
 			}
 
 		default:
-			return "", fmt.Errorf("Unexpected File Type '%s' whilst unarchiving file: '%s'", fileHeader.Typeflag, fileHeader.Name)
+			return "", fmt.Errorf("Unexpected File Type '%d' whilst unarchiving file: '%s'", fileHeader.Typeflag, fileHeader.Name)
 		}
 	}
 
