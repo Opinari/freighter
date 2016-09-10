@@ -113,7 +113,7 @@ func Unarchive(inputFilePath string, outputDirPath string) (unarchiveDirPath str
 
 		case tar.TypeDir:
 			log.Printf("Unarchiving folder: %s \n", uncompressedFilePath)
-			err := os.MkdirAll(uncompressedFilePath, 0666)
+			err := os.MkdirAll(uncompressedFilePath, 0755)
 			if err != nil {
 				return "", fmt.Errorf("Error occured whilst unarchiving folder: %s", err.Error())
 			}
