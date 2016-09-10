@@ -13,7 +13,7 @@ import (
 func RestoreFile(restoreFilePath string, remoteFilePath string) {
 
 	// Create Restore File Path
-	os.MkdirAll(restoreFilePath, 0666)
+	os.MkdirAll(restoreFilePath, 0755)
 
 	//  Download File
 	downloadedFilePath, err := dropbox.DownloadFile(restoreFilePath, remoteFilePath)
