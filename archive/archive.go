@@ -53,7 +53,8 @@ func Archive(inputDirPath string, outputFilePath string) (archivedFilePath strin
 			return fmt.Errorf("Error occured writing file header: %s", err.Error())
 		}
 
-		if !fileInfo.IsDir() {
+		// Write file body if its a regular file, i.e not Dir / Symlink etc
+		if fileInfo.Mode().IsRegular() {
 
 			// Read file contents
 			fileBody, err := ioutil.ReadFile(filePath)
