@@ -125,6 +125,13 @@ func Unarchive(inputFilePath string, outputDirPath string) (unarchiveDirPath str
 				return "", fmt.Errorf("Error occured whilst unarchiving file: %s", err.Error())
 			}
 
+		case tar.TypeSymlink:
+			log.Printf("Unarchiving symlink: %s \n", uncompressedFilePath)
+			err := writeFileFromArchive(uncompressedFilePath, tarReader)
+			if err != nil {
+				return "", fmt.Errorf("Error occured whilst unarchiving symlink: %s", err.Error())
+			}
+
 		default:
 			return "", fmt.Errorf("Unexpected File Type '%d' whilst unarchiving file: '%s'", fileHeader.Typeflag, fileHeader.Name)
 		}
