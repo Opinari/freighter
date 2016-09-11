@@ -13,12 +13,11 @@ script:
   - go test -v ./...
   - env GOOS=linux GOARCH=386 go build -v github.com/opinari/freighter
   - file freighter
+  - docker build -t opinari/freighter . ;
 
 after_success:
-
   - if [ $TRAVIS_BRANCH == 'master' ]; then
-        docker build -t opinari/freighter .;
-        docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+        docker -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
         docker push opinari/freighter;
     fi
 
