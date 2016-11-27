@@ -31,7 +31,7 @@ var accessToken string
 // TODO Perhaps this should be passed via constructor / composite literal
 func init() {
 	if accessToken == "" {
-		accessToken = os.Getenv("ACCESS_TOKEN")
+		accessToken = os.Getenv("BACKUP_PROVIDER_TOKEN")
 	}
 }
 
