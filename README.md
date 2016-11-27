@@ -11,7 +11,7 @@
 
 
 ```sh
-env ACCESS_TOKEN=[ACCESS_TOKEN] ./freighter restore --remotePath [REMOTE_FILE_PATH] --restoreFilePath [LOCAL_FILE_PATH] 
+env BACKUP_PROVIDER_TOKEN=[BACKUP_PROVIDER_TOKEN] ./freighter restore --remotePath [REMOTE_FILE_PATH] --restoreFilePath [LOCAL_FILE_PATH] 
 ```
 
 
@@ -20,7 +20,7 @@ env ACCESS_TOKEN=[ACCESS_TOKEN] ./freighter restore --remotePath [REMOTE_FILE_PA
 Run the following command to restore a backup from Dropbox:
 
 ```sh
-docker run -u [USER] -v [LOCAL_VOLUME_MAPPING]:/tmp -e ACCESS_TOKEN=[ACCESS_TOKEN] \
+docker run -u [USER] -v [LOCAL_VOLUME_MAPPING]:/tmp -e BACKUP_PROVIDER_TOKEN=[BACKUP_PROVIDER_TOKEN] \
   opinari/freighter restore --remotePath [REMOTE_FILE_PATH] --restoreFilePath /tmp/[LOCAL_FILE_PATH] 
 ```
 

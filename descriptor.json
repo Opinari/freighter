@@ -5,10 +5,10 @@
     "subject": "daves125125"
   },
   "version": {
-    "name": "0.1.5",
-    "desc": "Freighter v0.1.5",
-    "released": "2016-09-10",
-    "vcs_tag": "0.1.5",
+    "name": "0.1.6",
+    "desc": "Freighter v0.1.6",
+    "released": "2016-11-27",
+    "vcs_tag": "0.1.6",
     "gpgSign": false
   },
   "files": [
