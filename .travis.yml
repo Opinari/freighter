@@ -14,6 +14,8 @@ script:
   - env GOOS=linux GOARCH=386 go build -v github.com/opinari/freighter
   - file freighter
   - pwd
+  - ls /home/travis
+  - ls /home/travis/gopath
   - ls /home/travis/gopath/bin
   - docker build -t opinari/freighter . ;
 
