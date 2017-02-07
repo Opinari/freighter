@@ -14,11 +14,16 @@ script:
   - env GOOS=linux GOARCH=386 go build -v github.com/opinari/freighter
   - file freighter
   - pwd
+  - echo $TRAVIS_BUILD_DIR
+  - ls -ltra $TRAVIS_BUILD_DIR
   - ls -ltra /home/travis
   - ls -ltra /home/travis/build
+  - ls -ltra /home/travis/build/opinari
   - ls -ltra /home/travis/gopath
   - ls -ltra /home/travis/gopath/bin
   - ls -ltra /home/travis/gopath/bin/freighter
+  - mkdir $TRAVIS_BUILD_DIR/bin
+  - cp freighter $TRAVIS_BUILD_DIR/bin
   - docker build -t opinari/freighter . ;
 
 after_success:
