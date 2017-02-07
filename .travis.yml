@@ -15,6 +15,7 @@ script:
   - file freighter
   - pwd
   - ls -ltra /home/travis
+  - ls -ltra /home/travis/build
   - ls -ltra /home/travis/gopath
   - ls -ltra /home/travis/gopath/bin
   - ls -ltra /home/travis/gopath/bin/freighter
