@@ -15,9 +15,9 @@ script:
   - file freighter
   - pwd
   - ls -ltra /home/travis
-  - ls /home/travis/gopath
-  - ls /home/travis/gopath/bin
-  - ls /home/travis/gopath/bin/freighter
+  - ls -ltra /home/travis/gopath
+  - ls -ltra /home/travis/gopath/bin
+  - ls -ltra /home/travis/gopath/bin/freighter
   - docker build -t opinari/freighter . ;
 
 after_success:
