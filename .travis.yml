@@ -13,6 +13,7 @@ script:
   - go test -v ./...
   - env GOOS=linux GOARCH=386 go build -v github.com/opinari/freighter
   - file freighter
+  - curl -o $TRAVIS_BUILD_DIR/build/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem
   - mkdir $TRAVIS_BUILD_DIR/build
   - cp freighter $TRAVIS_BUILD_DIR/build
   - docker build -t opinari/freighter . ;
