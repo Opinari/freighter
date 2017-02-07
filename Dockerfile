@@ -1,4 +1,4 @@
-FROM golang:1.7.5-alpine
+FROM alpine:3.4
 
 COPY ./build/freighter /go/bin/freighter
 
