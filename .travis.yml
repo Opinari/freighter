@@ -14,7 +14,7 @@ script:
   - env GOOS=linux GOARCH=386 go build -v github.com/opinari/freighter
   - file freighter
   - pwd
-  - ls /home/travis
+  - ls -ltra /home/travis
   - ls /home/travis/gopath
   - ls /home/travis/gopath/bin
   - ls /home/travis/gopath/bin/freighter
