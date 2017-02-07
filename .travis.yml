@@ -7,12 +7,14 @@ services:
 language: go
 
 go:
-  - 1.6.3
+  - 1.7.5
 
 script:
   - go test -v ./...
   - env GOOS=linux GOARCH=386 go build -v github.com/opinari/freighter
   - file freighter
+  - pwd
+  - ls /go/bin/
   - docker build -t opinari/freighter . ;
 
 after_success:

@@ -47,24 +47,23 @@ type DropboxMoveOptions struct {
 func DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePath string, err error) {
 
 	checkToken();
-
 	log.Printf("Downloading file from: '%s' to: '%s'", remoteFilePath, restoreFilePath)
-
 
 	// Construct API File Path in required json format
 	apiPath := DropboxOptions{RemoteFilePath: remoteFilePath}
-	apiPathJsonBytes, _ := json.Marshal(apiPath)
+	apiPathJsonBytes, err := json.Marshal(apiPath)
+	if err != nil {
+		return "", fmt.Errorf("Error occured building json request payload: %s", err.Error())
+	}
 	apiPathJsonString := string(apiPathJsonBytes)
 
-
 	// Build http Request
-	request, err := http.NewRequest(http.MethodPost, dropboxContentAPI + downloadPath, nil)
+	request, err := http.NewRequest(http.MethodPost, dropboxContentAPI+downloadPath, nil)
 	if err != nil {
 		return "", fmt.Errorf("Error occured building http request: %s", err.Error())
 	}
 	request.Header.Add(dropboxAPIArg, apiPathJsonString)
-	request.Header.Add("Authorization", "Bearer " + accessToken)
-
+	request.Header.Add("Authorization", "Bearer "+accessToken)
 
 	// Create File
 	downloadedFilePath := restoreFilePath + tmpDownloadedFileName
@@ -73,7 +72,6 @@ func DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePa
 	if err != nil {
 		return "", fmt.Errorf("Error opening download file: %s", err.Error())
 	}
-
 
 	// Execute the http request
 	response, err := http.DefaultClient.Do(request)
@@ -85,13 +83,11 @@ func DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePa
 		return "", fmt.Errorf("Error downloading file, statusCode: %d, status: %s", response.StatusCode, response.Status)
 	}
 
-
 	// Create Proxy Reader for download status
 	progressBar := pb.New(int(response.ContentLength)).SetUnits(pb.U_BYTES)
 	progressBar.SetMaxWidth(100)
 	progressBar.Start()
 	proxyReader := progressBar.NewProxyReader(response.Body)
-
 
 	// Copy from http body reader to output file writer
 	_, err = io.Copy(outputFile, proxyReader)
@@ -101,7 +97,6 @@ func DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePa
 
 	progressBar.Finish()
 	log.Printf("Downloaded file successfully to: %s", downloadedFilePath)
-
 
 	// Return the path of the file of which was written
 	downloadFilePath = downloadedFilePath;
@@ -114,7 +109,6 @@ func UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath st
 
 	tmpRemotePath := remoteFilePath + ".tmp"
 
-
 	//
 	log.Printf("Uploading new tmp file from: '%s' to: '%s' ", backupFilePath, tmpRemotePath)
 	uploadFile(backupFilePath, tmpRemotePath)
@@ -122,7 +116,6 @@ func UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath st
 
 	instant := time.Now().UTC().Format(time.RFC3339)
 	archiveRemotePath := remoteFilePath + "-" + instant
-
 
 	//
 	log.Printf("Archiving old backup from: '%s' to: '%s' ", remoteFilePath, archiveRemotePath)
@@ -132,7 +125,6 @@ func UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath st
 	} else {
 		log.Printf("File was succesfully moved to: '%s'", archiveRemotePath)
 	}
-
 
 	//
 	log.Printf("Setting primary from: '%s' to: '%s' ", tmpRemotePath, remoteFilePath)
@@ -146,33 +138,35 @@ func UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath st
 	return
 }
 
-func DeleteFile(remoteFilePath string) (err error) {
+func DeleteFile(remoteFilePath string) (deleteFilePath string, err error) {
 
 	checkToken()
 
 	// Construct API File Path in required json format
 	apiPath := DropboxOptions{RemoteFilePath: remoteFilePath}
 	apiPathJsonBytes, _ := json.Marshal(apiPath)
+	if err != nil {
+		return "", fmt.Errorf("Error occured building json request payload: %s", err.Error())
+	}
 	bodyReader := bytes.NewReader(apiPathJsonBytes)
 
 	// Build http Request
-	request, err := http.NewRequest(http.MethodPost, dropboxAPI + deletePath, bodyReader)
+	request, err := http.NewRequest(http.MethodPost, dropboxAPI+deletePath, bodyReader)
 	if err != nil {
-		return fmt.Errorf("Error occured building http request: %s", err.Error())
+		return "", fmt.Errorf("Error occured building http request: %s", err.Error())
 	}
-	request.Header.Add("Authorization", "Bearer " + accessToken)
+	request.Header.Add("Authorization", "Bearer "+accessToken)
 	request.Header.Add("Content-Type", "application/json")
-
 
 	// Execute the http request
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return fmt.Errorf("Error executing delete request: %s", err.Error())
+		return "", fmt.Errorf("Error executing delete request: %s", err.Error())
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
-		return fmt.Errorf("Error deleting file, statusCode: %d, status: %s", response.StatusCode, response.Status)
+		return "", fmt.Errorf("Error deleting file, statusCode: %d, status: %s", response.StatusCode, response.Status)
 	}
 
 	log.Printf("File: '%s' was succesfully deleted", remoteFilePath)
@@ -187,16 +181,18 @@ func AgeFile(remoteFilePath string) (ageOfFile int, err error) {
 	// Construct API File Path in required json format
 	apiPath := DropboxOptions{RemoteFilePath: remoteFilePath}
 	apiPathJsonBytes, _ := json.Marshal(apiPath)
+	if err != nil {
+		return 0, fmt.Errorf("Error occured building json request payload: %s", err.Error())
+	}
 	bodyReader := bytes.NewReader(apiPathJsonBytes)
 
 	// Build http Request
-	request, err := http.NewRequest(http.MethodPost, dropboxAPI + metadataPath, bodyReader)
+	request, err := http.NewRequest(http.MethodPost, dropboxAPI+metadataPath, bodyReader)
 	if err != nil {
 		return 0, fmt.Errorf("Error occured building http request: %s", err.Error())
 	}
-	request.Header.Add("Authorization", "Bearer " + accessToken)
+	request.Header.Add("Authorization", "Bearer "+accessToken)
 	request.Header.Add("Content-Type", "application/json")
-
 
 	// Execute the http request
 	response, err := http.DefaultClient.Do(request)
@@ -218,7 +214,6 @@ func AgeFile(remoteFilePath string) (ageOfFile int, err error) {
 
 	lastModifiedDateString := body["server_modified"].(string)
 	log.Printf("Last modified date of file was: '%s' ", lastModifiedDateString)
-
 
 	// parse date
 	lastModifiedTime, err := time.Parse(time.RFC3339, lastModifiedDateString)
@@ -259,22 +254,22 @@ func uploadFile(backupFilePath string, remoteFilePath string) (outputFilePath st
 	progressBar.Start()
 	proxyReader := progressBar.NewProxyReader(reader)
 
-
 	// Construct API File Path in required json format
 	apiPath := DropboxOptions{RemoteFilePath: remoteFilePath}
 	apiPathJsonBytes, _ := json.Marshal(apiPath)
+	if err != nil {
+		return "", fmt.Errorf("Error occured building json request payload: %s", err.Error())
+	}
 	apiPathJsonString := string(apiPathJsonBytes)
 
-
 	// Build http Request
-	request, err := http.NewRequest(http.MethodPost, dropboxContentAPI + uploadPath, proxyReader)
+	request, err := http.NewRequest(http.MethodPost, dropboxContentAPI+uploadPath, proxyReader)
 	if err != nil {
 		return "", fmt.Errorf("Error occured building http request: %s", err.Error())
 	}
 	request.Header.Add(dropboxAPIArg, apiPathJsonString)
-	request.Header.Add("Authorization", "Bearer " + accessToken)
+	request.Header.Add("Authorization", "Bearer "+accessToken)
 	request.Header.Add("Content-Type", "application/octet-stream")
-
 
 	// Execute the http request
 	response, err := http.DefaultClient.Do(request)
@@ -296,16 +291,18 @@ func moveFile(fromPath string, toPath string) (outputFilePath string, err error)
 	// Construct API File Path in required json format
 	apiPath := DropboxMoveOptions{RemoteFileFromPath: fromPath, RemoteFileToPath: toPath}
 	apiPathJsonBytes, _ := json.Marshal(apiPath)
+	if err != nil {
+		return "", fmt.Errorf("Error occured building json request payload: %s", err.Error())
+	}
 	bodyReader := bytes.NewReader(apiPathJsonBytes)
 
 	// Build http Request
-	request, err := http.NewRequest(http.MethodPost, dropboxAPI + movePath, bodyReader)
+	request, err := http.NewRequest(http.MethodPost, dropboxAPI+movePath, bodyReader)
 	if err != nil {
 		return "", fmt.Errorf("Error occured building http request: %s", err.Error())
 	}
-	request.Header.Add("Authorization", "Bearer " + accessToken)
+	request.Header.Add("Authorization", "Bearer "+accessToken)
 	request.Header.Add("Content-Type", "application/json")
-
 
 	// Execute the http request
 	response, err := http.DefaultClient.Do(request)
