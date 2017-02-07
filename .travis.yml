@@ -17,6 +17,7 @@ script:
   - ls /home/travis
   - ls /home/travis/gopath
   - ls /home/travis/gopath/bin
+  - ls /home/travis/gopath/bin/freighter
   - docker build -t opinari/freighter . ;
 
 after_success:
