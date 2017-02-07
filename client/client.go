@@ -88,7 +88,7 @@ func AgeRemoteFile(outputFilePath string, remoteFilePath string) {
 
 func DeleteRemoteFile(remoteFilePath string) {
 
-	err := dropbox.DeleteFile(remoteFilePath)
+	_, err := dropbox.DeleteFile(remoteFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}

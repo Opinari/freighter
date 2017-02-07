@@ -10,6 +10,8 @@ import (
 	"net/http"
 )
 
+const version = "0.1.7";
+
 func init() {
 	log.SetOutput(os.Stdout)
 }
@@ -29,7 +31,6 @@ func runCLI() {
 		log.Fatalln("See 'freighter --help' for more info \n")
 	}
 	operation := os.Args[1]
-
 
 	// Flag parsing
 	// Declare placeholder vars for opts
@@ -76,7 +77,7 @@ func runCLI() {
 			fmt.Println("Required options for delete operation:")
 			subCmdFlagSet.PrintDefaults();
 		}
-	default :
+	default:
 		log.Printf("freighter: '%s' is not a valid freighter argument \n", operation)
 		log.Fatalln("See 'freighter --help' for more info \n")
 	}
@@ -89,6 +90,5 @@ func showBanner() {
 	fmt.Println("  / __/______ (_)__ _/ /  / /____ ____")
 	fmt.Println(" / _// __/ -_) / _ `/ _ \\/ __/ -_) __/")
 	fmt.Println("/_/ /_/  \\__/_/\\_, /_//_/\\__/\\__/_/   ")
-	fmt.Println("              /___/                   ")
-
+	fmt.Println("              /___/                   v" + version)
 }
