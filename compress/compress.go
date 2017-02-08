@@ -15,7 +15,6 @@ func CompressFile(uncompressedFilePath string, compressedFilePath string) (outpu
 
 	log.Printf("Compressing file from: %s to: %s", uncompressedFilePath, compressedFilePath)
 
-
 	// Create compressed file
 	compressedFile, err := os.Create(compressedFilePath)
 	if err != nil {
@@ -23,11 +22,9 @@ func CompressFile(uncompressedFilePath string, compressedFilePath string) (outpu
 	}
 	defer compressedFile.Close()
 
-
 	// Open GzipWriter
 	gzipWriter := gzip.NewWriter(compressedFile)
 	defer gzipWriter.Close()
-
 
 	// Open uncompressed file
 	uncompressedFile, err := os.Open(uncompressedFilePath)
@@ -69,14 +66,12 @@ func UncompressFile(compressedFilePath string, uncompressedFileDir string) (outp
 
 	log.Printf("Uncompressing file from: %s to: %s", compressedFilePath, uncompressedFileDir)
 
-
 	// Open compressed file
 	compressedFile, err := os.Open(compressedFilePath)
 	if err != nil {
 		return "", fmt.Errorf("Error occured finding compressed file: %s", err.Error())
 	}
 	defer compressedFile.Close()
-
 
 	// Open GzipReader
 	gzipReader, err := gzip.NewReader(bufio.NewReader(compressedFile))
@@ -85,7 +80,6 @@ func UncompressFile(compressedFilePath string, uncompressedFileDir string) (outp
 
 	}
 	defer gzipReader.Close()
-
 
 	// Open uncompressed file to write to
 	uncompressedFilePath := uncompressedFileDir + tmpUncompressedFileName

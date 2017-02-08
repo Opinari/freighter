@@ -41,13 +41,13 @@ func RestoreFile(restoreFilePath string, remoteFilePath string) {
 func BackupDirectory(backupFilePath string, remoteFilePath string) {
 
 	// Archive Files
-	archivedFilePath, err := archive.Archive(backupFilePath, backupFilePath + ".tar")
+	archivedFilePath, err := archive.Archive(backupFilePath, backupFilePath+".tar")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Compress File
-	compressedFilePath, err := compress.CompressFile(archivedFilePath, archivedFilePath + ".gz")
+	compressedFilePath, err := compress.CompressFile(archivedFilePath, archivedFilePath+".gz")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,10 +73,10 @@ func AgeRemoteFile(outputFilePath string, remoteFilePath string) {
 
 	// Create and open the output file for writing
 	outputFile, err := os.Create(outputFilePath)
-	defer outputFile.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer outputFile.Close()
 
 	// Write out age value to file
 	ageBytes := []byte(strconv.Itoa(age))

@@ -68,17 +68,18 @@ func DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePa
 	// Create File
 	downloadedFilePath := restoreFilePath + tmpDownloadedFileName
 	outputFile, err := os.Create(downloadedFilePath)
-	defer outputFile.Close()
 	if err != nil {
 		return "", fmt.Errorf("Error opening download file: %s", err.Error())
 	}
+	defer outputFile.Close()
 
 	// Execute the http request
 	response, err := http.DefaultClient.Do(request)
-	defer response.Body.Close()
 	if err != nil {
 		return "", fmt.Errorf("Error executing download request: %s", err.Error())
 	}
+	defer response.Body.Close()
+
 	if response.StatusCode != 200 {
 		return "", fmt.Errorf("Error downloading file, statusCode: %d, status: %s", response.StatusCode, response.Status)
 	}
@@ -235,7 +236,6 @@ func uploadFile(backupFilePath string, remoteFilePath string) (outputFilePath st
 
 	// Open File
 	uploadFile, err := os.Open(backupFilePath)
-	defer uploadFile.Close()
 	if err != nil {
 		return "", fmt.Errorf("Error occured during opening of download file: %s", err.Error())
 	}

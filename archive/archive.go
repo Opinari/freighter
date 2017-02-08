@@ -15,18 +15,15 @@ func Archive(inputDirPath string, outputFilePath string) (archivedFilePath strin
 
 	log.Printf("Archiving files from: %s to: %s", inputDirPath, outputFilePath)
 
-
 	// Create output file (tar)
 	tarFile, err := os.Create(outputFilePath)
 	if err != nil {
 		return "", fmt.Errorf("Error occured opening output tar file: %s", err.Error())
 	}
 
-
 	// Create a new tar writer
 	tarWriter := tar.NewWriter(tarFile)
 	defer tarWriter.Close()
-
 
 	// Recurse through the input root directory, adding each file / folder to the archive
 	err = filepath.Walk(inputDirPath, func(filePath string, fileInfo os.FileInfo, err error) error {
@@ -45,7 +42,6 @@ func Archive(inputDirPath string, outputFilePath string) (archivedFilePath strin
 		if err != nil {
 			return fmt.Errorf("Error determining file archive path: %s", err.Error())
 		}
-
 
 		// Write Header
 		log.Printf("Writing header entry with name: %s, size: %d", fileHeader.Name, fileHeader.Size)
@@ -90,7 +86,6 @@ func Unarchive(inputFilePath string, outputDirPath string) (unarchiveDirPath str
 		return "", fmt.Errorf("Error occured finding archived file: %s", err.Error())
 	}
 	defer archivedFile.Close()
-
 
 	// Create the tar reader
 	reader := bufio.NewReader(archivedFile)
@@ -146,10 +141,10 @@ func Unarchive(inputFilePath string, outputDirPath string) (unarchiveDirPath str
 func writeFileFromArchive(uncompressedFilePath string, tarReader io.Reader) (err error) {
 
 	fileWriter, err := os.Create(uncompressedFilePath)
-	defer fileWriter.Close()
 	if err != nil {
 		return fmt.Errorf("Error creating file: %s", err.Error())
 	}
+	defer fileWriter.Close()
 
 	if _, err := io.Copy(fileWriter, tarReader); err != nil {
 		return fmt.Errorf("Error occured whilst writing to file: %s", err.Error())
