@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-const version = "0.2.0";
+const version = "0.2.1";
 
 func init() {
 	log.SetOutput(os.Stdout)
