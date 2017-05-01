@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"github.com/opinari/freighter/client"
 	_ "net/http/pprof"
 	"net/http"
+	"github.com/opinari/freighter/client"
 )
 
-const version = "0.2.1";
+const version = "0.2.1"
 
 func init() {
 	log.SetOutput(os.Stdout)
@@ -19,7 +19,7 @@ func init() {
 func main() {
 	go http.ListenAndServe(":8080", http.DefaultServeMux)
 	showBanner()
-	runCLI();
+	runCLI()
 }
 
 // TODO Make the CLI an instance and execute the args / flags upon it
@@ -47,35 +47,35 @@ func runCLI() {
 	switch operation {
 	case "restore":
 		log.Println("Performing Restore")
-		if (restoreFilePath != "" && remoteFilePath != "") {
+		if restoreFilePath != "" && remoteFilePath != "" {
 			client.RestoreFile(restoreFilePath, remoteFilePath)
 		} else {
 			fmt.Println("Required options for restore operation:")
-			subCmdFlagSet.PrintDefaults();
+			subCmdFlagSet.PrintDefaults()
 		}
 	case "backup":
 		log.Println("Performing Backup")
-		if (backupFilePath != "" && remoteFilePath != "") {
+		if backupFilePath != "" && remoteFilePath != "" {
 			client.BackupDirectory(backupFilePath, remoteFilePath)
 		} else {
 			fmt.Println("Required options for backup operation:")
-			subCmdFlagSet.PrintDefaults();
+			subCmdFlagSet.PrintDefaults()
 		}
 	case "age":
 		log.Println("Performing Age Check")
-		if (ageOutputFilePath != "" && remoteFilePath != "") {
+		if ageOutputFilePath != "" && remoteFilePath != "" {
 			client.AgeRemoteFile(ageOutputFilePath, remoteFilePath)
 		} else {
 			fmt.Println("Required options for age operation:")
-			subCmdFlagSet.PrintDefaults();
+			subCmdFlagSet.PrintDefaults()
 		}
 	case "delete":
 		log.Println("Performing Delete")
-		if (remoteFilePath != "") {
+		if remoteFilePath != "" {
 			client.DeleteRemoteFile(remoteFilePath)
 		} else {
 			fmt.Println("Required options for delete operation:")
-			subCmdFlagSet.PrintDefaults();
+			subCmdFlagSet.PrintDefaults()
 		}
 	default:
 		log.Printf("freighter: '%s' is not a valid freighter argument \n", operation)
