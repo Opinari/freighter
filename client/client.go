@@ -5,68 +5,116 @@ import (
 	"os"
 	"github.com/opinari/freighter/archive"
 	"github.com/opinari/freighter/compress"
-	"github.com/opinari/freighter/dropbox"
+	"github.com/opinari/freighter/storage"
 	"io/ioutil"
 	"strconv"
+	"fmt"
+	"errors"
 )
 
-func RestoreFile(restoreFilePath string, remoteFilePath string) {
+// StorageClient abstracts the basic IO operations from a StorageProvider
+//
+// The storage client performs operations like compression / archival etc which are operations applicable
+// regardless of the underlying StorageProvider.
+type StorageClient interface {
+	RestoreFile(restoreFilePath string, remoteFilePath string) error
+	BackupDirectory(backupFilePath string, remoteFilePath string) error
+	AgeRemoteFile(outputFilePath string, remoteFilePath string) error
+	DeleteRemoteFile(remoteFilePath string) error
+}
+
+// Basic Filesystem implementation of the StorageClient
+//
+// Standard permissions are assumed for writing files / directories.
+type FilesystemStorageClient struct {
+	storageProvider storage.StorageProvider
+}
+
+func (sc *FilesystemStorageClient) RestoreFile(restoreFilePath string, remoteFilePath string) error {
+
+	if restoreFilePath[:1] != "/" && restoreFilePath[:1] != "~" {
+		return errors.New("restore path must be populated and refer to an absolute filesystem path")
+	}
 
 	// Create Restore File Path
-	os.MkdirAll(restoreFilePath, 0755)
+	if err := os.MkdirAll(restoreFilePath, 0755); err != nil {
+		return fmt.Errorf("error preparing restore path: %v", err)
+	}
 
 	//  Download File
-	downloadedFilePath, err := dropbox.DownloadFile(restoreFilePath, remoteFilePath)
+	downloadedFilePath, err := sc.storageProvider.DownloadFile(restoreFilePath, remoteFilePath)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// Uncompress File
 	compressedFile, err := compress.UncompressFile(downloadedFilePath, restoreFilePath)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// Unarchive Files
 	_, err = archive.Unarchive(compressedFile, restoreFilePath)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// Cleanup tmp Downloaded and Uncompressed files
-	os.Remove(downloadedFilePath)
-	os.Remove(compressedFile)
+	if err := os.Remove(downloadedFilePath); err != nil {
+		return fmt.Errorf("error cleaning up original download: %v", err)
+	}
+
+	if err := os.Remove(compressedFile); err != nil {
+		return fmt.Errorf("error cleaning up temporary archive: %v", err)
+	}
+
+	return nil
 }
 
-func BackupDirectory(backupFilePath string, remoteFilePath string) {
+func (sc *FilesystemStorageClient) BackupDirectory(backupFilePath string, remoteFilePath string) error {
+
+	if backupFilePath[:1] != "/" && backupFilePath[:1] != "~" {
+		return errors.New("backup path must be populated and refer to an absolute filesystem path")
+	}
 
 	// Archive Files
-	archivedFilePath, err := archive.Archive(backupFilePath, backupFilePath+".tar")
+	archivedFilePath, err := archive.Archive(backupFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Compress File
-	compressedFilePath, err := compress.CompressFile(archivedFilePath, archivedFilePath+".gz")
+	compressedFilePath, err := compress.CompressFile(archivedFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Upload File
-	_, err = dropbox.UploadFile(compressedFilePath, remoteFilePath)
+	_, err = sc.storageProvider.UploadFile(compressedFilePath, remoteFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Cleanup tmp Archived and Compressed files
-	os.Remove(archivedFilePath)
-	os.Remove(compressedFilePath)
+	if err := os.Remove(archivedFilePath); err != nil {
+		return fmt.Errorf("error cleaning up archive file: %v", err)
+	}
+
+	if err := os.Remove(compressedFilePath); err != nil {
+		return fmt.Errorf("error cleaning up compressed file: %v", err)
+	}
+
+	return nil
 }
 
-func AgeRemoteFile(outputFilePath string, remoteFilePath string) {
+func (sc *FilesystemStorageClient) AgeRemoteFile(outputFilePath string, remoteFilePath string) error {
+
+	if outputFilePath[:1] != "/" && outputFilePath[:1] != "~" {
+		return errors.New("age output path must be populated and refer to an absolute filesystem path")
+	}
 
 	// Perform age lookup
-	age, err := dropbox.AgeFile(remoteFilePath)
+	age, err := sc.storageProvider.AgeFile(remoteFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -84,13 +132,19 @@ func AgeRemoteFile(outputFilePath string, remoteFilePath string) {
 		log.Fatal(err)
 	}
 
+	return nil
 }
 
-func DeleteRemoteFile(remoteFilePath string) {
+func (sc *FilesystemStorageClient) DeleteRemoteFile(remoteFilePath string) error {
 
-	_, err := dropbox.DeleteFile(remoteFilePath)
+	_, err := sc.storageProvider.DeleteFile(remoteFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	return nil
+}
+
+func NewStorageClient(sp storage.StorageProvider) StorageClient {
+	return &FilesystemStorageClient{storageProvider: sp}
 }

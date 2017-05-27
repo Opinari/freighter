@@ -12,6 +12,7 @@ import (
 	"time"
 	"bytes"
 	"io/ioutil"
+	"github.com/opinari/freighter/storage"
 )
 
 const dropboxAPI = "https://api.dropboxapi.com/2"
@@ -26,13 +27,8 @@ const movePath = "/files/move"
 const metadataPath = "/files/get_metadata"
 const deletePath = "/files/delete"
 
-var accessToken string
-
-// TODO Perhaps this should be passed via constructor / composite literal
-func init() {
-	if accessToken == "" {
-		accessToken = os.Getenv("BACKUP_PROVIDER_TOKEN")
-	}
+type DropboxStorageProvider struct {
+	accessToken string
 }
 
 type DropboxOptions struct {
@@ -44,9 +40,8 @@ type DropboxMoveOptions struct {
 	RemoteFileToPath   string `json:"to_path"`
 }
 
-func DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePath string, err error) {
+func (sp DropboxStorageProvider) DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePath string, err error) {
 
-	checkToken();
 	log.Printf("Downloading file from: '%s' to: '%s'", remoteFilePath, restoreFilePath)
 
 	// Construct API File Path in required json format
@@ -63,7 +58,7 @@ func DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePa
 		return "", fmt.Errorf("Error occured building http request: %s", err.Error())
 	}
 	request.Header.Add(dropboxAPIArg, apiPathJsonString)
-	request.Header.Add("Authorization", "Bearer "+accessToken)
+	request.Header.Add("Authorization", "Bearer "+sp.accessToken)
 
 	// Create File
 	downloadedFilePath := restoreFilePath + tmpDownloadedFileName
@@ -100,19 +95,17 @@ func DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePa
 	log.Printf("Downloaded file successfully to: %s", downloadedFilePath)
 
 	// Return the path of the file of which was written
-	downloadFilePath = downloadedFilePath;
+	downloadFilePath = downloadedFilePath
 	return
 }
 
-func UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath string, err error) {
-
-	checkToken()
+func (sp DropboxStorageProvider) UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath string, err error) {
 
 	tmpRemotePath := remoteFilePath + ".tmp"
 
 	//
 	log.Printf("Uploading new tmp file from: '%s' to: '%s' ", backupFilePath, tmpRemotePath)
-	uploadFile(backupFilePath, tmpRemotePath)
+	uploadFile(sp.accessToken, backupFilePath, tmpRemotePath)
 	log.Printf("File was succesfully uploaded to: '%s'", tmpRemotePath)
 
 	instant := time.Now().UTC().Format(time.RFC3339)
@@ -120,7 +113,7 @@ func UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath st
 
 	//
 	log.Printf("Archiving old backup from: '%s' to: '%s' ", remoteFilePath, archiveRemotePath)
-	_, err = moveFile(remoteFilePath, archiveRemotePath)
+	_, err = moveFile(sp.accessToken, remoteFilePath, archiveRemotePath)
 	if err != nil {
 		log.Printf("Assuming new backup, Error occured moving file: %s", err.Error())
 	} else {
@@ -129,7 +122,7 @@ func UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath st
 
 	//
 	log.Printf("Setting primary from: '%s' to: '%s' ", tmpRemotePath, remoteFilePath)
-	_, err = moveFile(tmpRemotePath, remoteFilePath)
+	_, err = moveFile(sp.accessToken, tmpRemotePath, remoteFilePath)
 	if err != nil {
 		return "", fmt.Errorf("Error occured moving file: %s", err.Error())
 	}
@@ -139,9 +132,7 @@ func UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath st
 	return
 }
 
-func DeleteFile(remoteFilePath string) (deleteFilePath string, err error) {
-
-	checkToken()
+func (sp DropboxStorageProvider) DeleteFile(remoteFilePath string) (deleteFilePath string, err error) {
 
 	// Construct API File Path in required json format
 	apiPath := DropboxOptions{RemoteFilePath: remoteFilePath}
@@ -156,7 +147,7 @@ func DeleteFile(remoteFilePath string) (deleteFilePath string, err error) {
 	if err != nil {
 		return "", fmt.Errorf("Error occured building http request: %s", err.Error())
 	}
-	request.Header.Add("Authorization", "Bearer "+accessToken)
+	request.Header.Add("Authorization", "Bearer "+sp.accessToken)
 	request.Header.Add("Content-Type", "application/json")
 
 	// Execute the http request
@@ -175,9 +166,7 @@ func DeleteFile(remoteFilePath string) (deleteFilePath string, err error) {
 	return
 }
 
-func AgeFile(remoteFilePath string) (ageOfFile int, err error) {
-
-	checkToken()
+func (sp DropboxStorageProvider) AgeFile(remoteFilePath string) (ageOfFile int, err error) {
 
 	// Construct API File Path in required json format
 	apiPath := DropboxOptions{RemoteFilePath: remoteFilePath}
@@ -192,7 +181,7 @@ func AgeFile(remoteFilePath string) (ageOfFile int, err error) {
 	if err != nil {
 		return 0, fmt.Errorf("Error occured building http request: %s", err.Error())
 	}
-	request.Header.Add("Authorization", "Bearer "+accessToken)
+	request.Header.Add("Authorization", "Bearer "+sp.accessToken)
 	request.Header.Add("Content-Type", "application/json")
 
 	// Execute the http request
@@ -218,21 +207,15 @@ func AgeFile(remoteFilePath string) (ageOfFile int, err error) {
 
 	// parse date
 	lastModifiedTime, err := time.Parse(time.RFC3339, lastModifiedDateString)
-	timeNow := time.Now().UTC();
-	timeDiffInDays := int(timeNow.Sub(lastModifiedTime.UTC()).Hours() / 24);
+	timeNow := time.Now().UTC()
+	timeDiffInDays := int(timeNow.Sub(lastModifiedTime.UTC()).Hours() / 24)
 	log.Printf("Age of file was: '%d' day(s) ", timeDiffInDays)
 
 	ageOfFile = timeDiffInDays
 	return
 }
 
-func checkToken() {
-	if accessToken == "" {
-		log.Fatalln("Error: No Access token provided for storage provider dropbox")
-	}
-}
-
-func uploadFile(backupFilePath string, remoteFilePath string) (outputFilePath string, err error) {
+func uploadFile(accessToken, backupFilePath, remoteFilePath string) (outputFilePath string, err error) {
 
 	// Open File
 	uploadFile, err := os.Open(backupFilePath)
@@ -286,7 +269,7 @@ func uploadFile(backupFilePath string, remoteFilePath string) (outputFilePath st
 	return
 }
 
-func moveFile(fromPath string, toPath string) (outputFilePath string, err error) {
+func moveFile(accessToken, fromPath, toPath string) (outputFilePath string, err error) {
 
 	// Construct API File Path in required json format
 	apiPath := DropboxMoveOptions{RemoteFileFromPath: fromPath, RemoteFileToPath: toPath}
@@ -316,4 +299,8 @@ func moveFile(fromPath string, toPath string) (outputFilePath string, err error)
 	}
 
 	return
+}
+
+func NewDropboxStorageClient(backupProviderToken string) storage.StorageProvider {
+	return &DropboxStorageProvider{accessToken: backupProviderToken}
 }

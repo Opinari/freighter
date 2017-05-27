@@ -11,7 +11,10 @@ import (
 	"bufio"
 )
 
-func Archive(inputDirPath string, outputFilePath string) (archivedFilePath string, err error) {
+// TODO Stick this behind an interface, this is a tar archive implementation
+func Archive(inputDirPath string) (archivedFilePath string, err error) {
+
+	outputFilePath := inputDirPath + ".tar"
 
 	log.Printf("Archiving files from: %s to: %s", inputDirPath, outputFilePath)
 

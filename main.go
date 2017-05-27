@@ -3,21 +3,20 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/opinari/freighter/client"
+	"github.com/opinari/freighter/dropbox"
+	"github.com/opinari/freighter/storage"
 	"log"
 	"os"
-	_ "net/http/pprof"
-	"net/http"
-	"github.com/opinari/freighter/client"
 )
 
-const version = "0.2.1"
+const version = "0.3.0"
 
 func init() {
 	log.SetOutput(os.Stdout)
 }
 
 func main() {
-	go http.ListenAndServe(":8080", http.DefaultServeMux)
 	showBanner()
 	runCLI()
 }
@@ -34,21 +33,30 @@ func runCLI() {
 
 	// Flag parsing
 	// Declare placeholder vars for opts
-	var remoteFilePath, restoreFilePath, backupFilePath, ageOutputFilePath string
+	var providerType, remoteFilePath, restoreFilePath, backupFilePath, ageOutputFilePath string
 
 	subCmdArgs := os.Args[2:]
 	subCmdFlagSet := flag.NewFlagSet("operationFlagset", flag.ErrorHandling(flag.ExitOnError))
+
+	// Defaulting to Dropbox for now due to backwards compatibility
+	subCmdFlagSet.StringVar(&providerType, "providerType", "dropbox", "The storage backend provider to use")
 	subCmdFlagSet.StringVar(&remoteFilePath, "remoteFilePath", "", "The remote file path to use within the operation")
 	subCmdFlagSet.StringVar(&restoreFilePath, "restoreFilePath", "", "The directory location of where to restore the file(s)")
 	subCmdFlagSet.StringVar(&backupFilePath, "backupFilePath", "", "The path to the directory of which to backup")
 	subCmdFlagSet.StringVar(&ageOutputFilePath, "ageOutputFilePath", "", "The path to the directory of which to backup")
 	subCmdFlagSet.Parse(subCmdArgs)
 
+	backupProviderToken := resolveBackupProviderToken()
+	storageProvider := resolveStorageProvider(providerType, backupProviderToken)
+	storageClient := client.NewStorageClient(storageProvider)
+
 	switch operation {
 	case "restore":
 		log.Println("Performing Restore")
 		if restoreFilePath != "" && remoteFilePath != "" {
-			client.RestoreFile(restoreFilePath, remoteFilePath)
+			if err := storageClient.RestoreFile(restoreFilePath, remoteFilePath); err != nil {
+				log.Fatal(err)
+			}
 		} else {
 			fmt.Println("Required options for restore operation:")
 			subCmdFlagSet.PrintDefaults()
@@ -56,7 +64,9 @@ func runCLI() {
 	case "backup":
 		log.Println("Performing Backup")
 		if backupFilePath != "" && remoteFilePath != "" {
-			client.BackupDirectory(backupFilePath, remoteFilePath)
+			if err := storageClient.BackupDirectory(backupFilePath, remoteFilePath); err != nil {
+				log.Fatal(err)
+			}
 		} else {
 			fmt.Println("Required options for backup operation:")
 			subCmdFlagSet.PrintDefaults()
@@ -64,7 +74,9 @@ func runCLI() {
 	case "age":
 		log.Println("Performing Age Check")
 		if ageOutputFilePath != "" && remoteFilePath != "" {
-			client.AgeRemoteFile(ageOutputFilePath, remoteFilePath)
+			if err := storageClient.AgeRemoteFile(ageOutputFilePath, remoteFilePath); err != nil {
+				log.Fatal(err)
+			}
 		} else {
 			fmt.Println("Required options for age operation:")
 			subCmdFlagSet.PrintDefaults()
@@ -72,7 +84,9 @@ func runCLI() {
 	case "delete":
 		log.Println("Performing Delete")
 		if remoteFilePath != "" {
-			client.DeleteRemoteFile(remoteFilePath)
+			if err := storageClient.DeleteRemoteFile(remoteFilePath); err != nil {
+				log.Fatal(err)
+			}
 		} else {
 			fmt.Println("Required options for delete operation:")
 			subCmdFlagSet.PrintDefaults()
@@ -82,6 +96,29 @@ func runCLI() {
 		log.Fatalln("See 'freighter --help' for more info \n")
 	}
 
+}
+
+// TODO Provide alternative strategies to provide this other than just env var
+func resolveBackupProviderToken() string {
+	backupProviderToken := os.Getenv("BACKUP_PROVIDER_TOKEN")
+	if backupProviderToken == "" {
+		log.Fatalln("Error: No Access token provided for storage storage dropbox")
+	}
+
+	return backupProviderToken
+}
+
+func resolveStorageProvider(providerType, backupProviderToken string) storage.StorageProvider {
+
+	switch providerType {
+
+	case "dropbox":
+		return dropbox.NewDropboxStorageClient(backupProviderToken)
+
+	default:
+		log.Fatalln("Error: Invalid Provider Type given: " + providerType)
+		return nil
+	}
 }
 
 func showBanner() {

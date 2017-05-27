@@ -7,10 +7,10 @@
     "licenses": ["MIT"]
   },
   "version": {
-    "name": "0.2.2",
-    "desc": "Freighter v0.2.2",
-    "released": "2017-05-01",
-    "vcs_tag": "0.2.2",
+    "name": "0.3.0",
+    "desc": "Freighter v0.3.0",
+    "released": "2017-05-027",
+    "vcs_tag": "0.3.0",
     "gpgSign": false
   },
   "files": [
