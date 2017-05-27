@@ -2,13 +2,15 @@
   "package": {
     "name": "freighter",
     "repo": "Go-Distribution",
-    "subject": "daves125125"
+    "subject": "daves125125",
+    "vcs_url": "https://github.com/opinari/freighter.git",
+    "licenses": ["MIT"]
   },
   "version": {
-    "name": "0.2.1",
-    "desc": "Freighter v0.2.1",
-    "released": "2016-11-27",
-    "vcs_tag": "0.2.1",
+    "name": "0.3.0",
+    "desc": "Freighter v0.3.0",
+    "released": "2017-05-027",
+    "vcs_tag": "0.3.0",
     "gpgSign": false
   },
   "files": [

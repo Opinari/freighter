@@ -11,7 +11,11 @@ import (
 
 const tmpUncompressedFileName = "/tmp.tar"
 
-func CompressFile(uncompressedFilePath string, compressedFilePath string) (outputFilePath string, err error) {
+// TODO It should have no reference to tar files really
+// TODO Stick this behind an interface, this is a gzip archive implementation
+func CompressFile(uncompressedFilePath string) (outputFilePath string, err error) {
+
+	compressedFilePath := uncompressedFilePath + ".gz"
 
 	log.Printf("Compressing file from: %s to: %s", uncompressedFilePath, compressedFilePath)
 
