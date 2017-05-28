@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"github.com/opinari/freighter/client"
 	"github.com/opinari/freighter/dropbox"
+	"github.com/opinari/freighter/github"
 	"github.com/opinari/freighter/storage"
 	"log"
 	"os"
 )
 
-const version = "0.3.0"
+const version = "0.4.0"
 
 func init() {
 	log.SetOutput(os.Stdout)
@@ -33,13 +34,13 @@ func runCLI() {
 
 	// Flag parsing
 	// Declare placeholder vars for opts
-	var providerType, remoteFilePath, restoreFilePath, backupFilePath, ageOutputFilePath string
+	var storageProvider, remoteFilePath, restoreFilePath, backupFilePath, ageOutputFilePath string
 
 	subCmdArgs := os.Args[2:]
 	subCmdFlagSet := flag.NewFlagSet("operationFlagset", flag.ErrorHandling(flag.ExitOnError))
 
 	// Defaulting to Dropbox for now due to backwards compatibility
-	subCmdFlagSet.StringVar(&providerType, "providerType", "dropbox", "The storage backend provider to use")
+	subCmdFlagSet.StringVar(&storageProvider, "storageProvider", "dropbox", "The storage backend provider to use")
 	subCmdFlagSet.StringVar(&remoteFilePath, "remoteFilePath", "", "The remote file path to use within the operation")
 	subCmdFlagSet.StringVar(&restoreFilePath, "restoreFilePath", "", "The directory location of where to restore the file(s)")
 	subCmdFlagSet.StringVar(&backupFilePath, "backupFilePath", "", "The path to the directory of which to backup")
@@ -47,8 +48,8 @@ func runCLI() {
 	subCmdFlagSet.Parse(subCmdArgs)
 
 	backupProviderToken := resolveBackupProviderToken()
-	storageProvider := resolveStorageProvider(providerType, backupProviderToken)
-	storageClient := client.NewStorageClient(storageProvider)
+	sp := resolveStorageProvider(storageProvider, backupProviderToken)
+	storageClient := client.NewStorageClient(sp)
 
 	switch operation {
 	case "restore":
@@ -100,23 +101,25 @@ func runCLI() {
 
 // TODO Provide alternative strategies to provide this other than just env var
 func resolveBackupProviderToken() string {
-	backupProviderToken := os.Getenv("BACKUP_PROVIDER_TOKEN")
-	if backupProviderToken == "" {
-		log.Fatalln("Error: No Access token provided for storage storage dropbox")
-	}
 
+	backupProviderToken := os.Getenv("BACKUP_PROVIDER_TOKEN")
 	return backupProviderToken
 }
 
-func resolveStorageProvider(providerType, backupProviderToken string) storage.StorageProvider {
+func resolveStorageProvider(storageProvider, backupProviderToken string) storage.StorageProvider {
 
-	switch providerType {
+	switch storageProvider {
 
 	case "dropbox":
+		log.Println("Using Dropbox as a Storage Provider")
 		return dropbox.NewDropboxStorageClient(backupProviderToken)
 
+	case "github":
+		log.Println("Using Github as a Storage Provider")
+		return github.NewGithubStorageProvider(backupProviderToken)
+
 	default:
-		log.Fatalln("Error: Invalid Provider Type given: " + providerType)
+		log.Fatalln("Error: Invalid Provider Type given: " + storageProvider)
 		return nil
 	}
 }

@@ -7,13 +7,20 @@ import (
 	"bufio"
 	"os"
 	"io"
+	"path/filepath"
+	"strings"
 )
 
-const tmpUncompressedFileName = "/tmp.tar"
+type Compressor interface {
+	CompressFile(uncompressedFilePath string) (outputFilePath string, err error)
+	UncompressFile(compressedFilePath string, uncompressedFileDir string) (outputFilePath string, err error)
+	IsSupported(fileExt string) bool
+}
 
-// TODO It should have no reference to tar files really
-// TODO Stick this behind an interface, this is a gzip archive implementation
-func CompressFile(uncompressedFilePath string) (outputFilePath string, err error) {
+type GzipCompressor struct {
+}
+
+func (c *GzipCompressor) CompressFile(uncompressedFilePath string) (outputFilePath string, err error) {
 
 	compressedFilePath := uncompressedFilePath + ".gz"
 
@@ -66,7 +73,7 @@ func CompressFile(uncompressedFilePath string) (outputFilePath string, err error
 	return
 }
 
-func UncompressFile(compressedFilePath string, uncompressedFileDir string) (outputFilePath string, err error) {
+func (c *GzipCompressor) UncompressFile(compressedFilePath string, uncompressedFileDir string) (outputFilePath string, err error) {
 
 	log.Printf("Uncompressing file from: %s to: %s", compressedFilePath, uncompressedFileDir)
 
@@ -86,7 +93,9 @@ func UncompressFile(compressedFilePath string, uncompressedFileDir string) (outp
 	defer gzipReader.Close()
 
 	// Open uncompressed file to write to
-	uncompressedFilePath := uncompressedFileDir + tmpUncompressedFileName
+	_, compressedFileName := filepath.Split(compressedFilePath)
+	uncompressedFilePath := uncompressedFileDir + "/"+ strings.TrimSuffix(compressedFileName, ".gz")
+
 	uncompressedFile, err := os.Create(uncompressedFilePath)
 	if err != nil {
 		return "", fmt.Errorf("Error creating uncompressed file: %s", err.Error())
@@ -116,9 +125,18 @@ func UncompressFile(compressedFilePath string, uncompressedFileDir string) (outp
 		return "", fmt.Errorf("Error flushing to uncompressed file: %s", err.Error())
 
 	}
-
 	log.Printf("Uncompressed file successfully to: %s", uncompressedFilePath)
 
-	outputFilePath = uncompressedFilePath
-	return
+	return uncompressedFilePath, nil
+}
+
+func (c *GzipCompressor) IsSupported(fileExt string) bool {
+	if fileExt == ".gz" {
+		return true
+	}
+	return false
+}
+
+func NewGzipCompressor() Compressor {
+	return &GzipCompressor{}
 }
