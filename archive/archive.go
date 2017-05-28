@@ -11,8 +11,16 @@ import (
 	"bufio"
 )
 
-// TODO Stick this behind an interface, this is a tar archive implementation
-func Archive(inputDirPath string) (archivedFilePath string, err error) {
+type Archiver interface {
+	Archive(inputDirPath string) (archivedFilePath string, err error)
+	Unarchive(inputFilePath string, outputDirPath string) (unarchiveDirPath string, err error)
+	IsSupported(fileExt string) bool
+}
+
+type TarArchiver struct {
+}
+
+func (a *TarArchiver) Archive(inputDirPath string) (archivedFilePath string, err error) {
 
 	outputFilePath := inputDirPath + ".tar"
 
@@ -79,7 +87,7 @@ func Archive(inputDirPath string) (archivedFilePath string, err error) {
 	return
 }
 
-func Unarchive(inputFilePath string, outputDirPath string) (unarchiveDirPath string, err error) {
+func (a *TarArchiver) Unarchive(inputFilePath string, outputDirPath string) (unarchiveDirPath string, err error) {
 
 	log.Printf("Unarchiving files from: %s to: %s", inputFilePath, outputDirPath)
 
@@ -141,6 +149,13 @@ func Unarchive(inputFilePath string, outputDirPath string) (unarchiveDirPath str
 	return
 }
 
+func (a *TarArchiver) IsSupported(fileExt string) bool {
+	if fileExt == ".tar" {
+		return true
+	}
+	return false
+}
+
 func writeFileFromArchive(uncompressedFilePath string, tarReader io.Reader) (err error) {
 
 	fileWriter, err := os.Create(uncompressedFilePath)
@@ -154,4 +169,8 @@ func writeFileFromArchive(uncompressedFilePath string, tarReader io.Reader) (err
 	}
 
 	return
+}
+
+func NewTarArchiver() Archiver {
+	return &TarArchiver{}
 }

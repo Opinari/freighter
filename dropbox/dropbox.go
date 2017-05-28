@@ -20,8 +20,6 @@ const dropboxContentAPI = "https://content.dropboxapi.com/2"
 const dropboxAPIArg = "Dropbox-API-Arg"
 
 const downloadPath = "/files/download"
-const tmpDownloadedFileName = "/tmp.tar.gz"
-
 const uploadPath = "/files/upload"
 const movePath = "/files/move"
 const metadataPath = "/files/get_metadata"
@@ -42,8 +40,6 @@ type DropboxMoveOptions struct {
 
 func (sp DropboxStorageProvider) DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePath string, err error) {
 
-	log.Printf("Downloading file from: '%s' to: '%s'", remoteFilePath, restoreFilePath)
-
 	// Construct API File Path in required json format
 	apiPath := DropboxOptions{RemoteFilePath: remoteFilePath}
 	apiPathJsonBytes, err := json.Marshal(apiPath)
@@ -61,8 +57,7 @@ func (sp DropboxStorageProvider) DownloadFile(restoreFilePath string, remoteFile
 	request.Header.Add("Authorization", "Bearer "+sp.accessToken)
 
 	// Create File
-	downloadedFilePath := restoreFilePath + tmpDownloadedFileName
-	outputFile, err := os.Create(downloadedFilePath)
+	outputFile, err := os.Create(restoreFilePath)
 	if err != nil {
 		return "", fmt.Errorf("Error opening download file: %s", err.Error())
 	}
@@ -74,11 +69,11 @@ func (sp DropboxStorageProvider) DownloadFile(restoreFilePath string, remoteFile
 		return "", fmt.Errorf("Error executing download request: %s", err.Error())
 	}
 	defer response.Body.Close()
-
 	if response.StatusCode != 200 {
 		return "", fmt.Errorf("Error downloading file, statusCode: %d, status: %s", response.StatusCode, response.Status)
 	}
 
+	// TODO decorate this behaviour in a function to use for all storage providers without duplication
 	// Create Proxy Reader for download status
 	progressBar := pb.New(int(response.ContentLength)).SetUnits(pb.U_BYTES)
 	progressBar.SetMaxWidth(100)
@@ -92,18 +87,14 @@ func (sp DropboxStorageProvider) DownloadFile(restoreFilePath string, remoteFile
 	}
 
 	progressBar.Finish()
-	log.Printf("Downloaded file successfully to: %s", downloadedFilePath)
 
-	// Return the path of the file of which was written
-	downloadFilePath = downloadedFilePath
-	return
+	return restoreFilePath, nil
 }
 
 func (sp DropboxStorageProvider) UploadFile(backupFilePath string, remoteFilePath string) (uploadFilePath string, err error) {
 
 	tmpRemotePath := remoteFilePath + ".tmp"
 
-	//
 	log.Printf("Uploading new tmp file from: '%s' to: '%s' ", backupFilePath, tmpRemotePath)
 	uploadFile(sp.accessToken, backupFilePath, tmpRemotePath)
 	log.Printf("File was succesfully uploaded to: '%s'", tmpRemotePath)
@@ -111,7 +102,6 @@ func (sp DropboxStorageProvider) UploadFile(backupFilePath string, remoteFilePat
 	instant := time.Now().UTC().Format(time.RFC3339)
 	archiveRemotePath := remoteFilePath + "-" + instant
 
-	//
 	log.Printf("Archiving old backup from: '%s' to: '%s' ", remoteFilePath, archiveRemotePath)
 	_, err = moveFile(sp.accessToken, remoteFilePath, archiveRemotePath)
 	if err != nil {
@@ -120,7 +110,6 @@ func (sp DropboxStorageProvider) UploadFile(backupFilePath string, remoteFilePat
 		log.Printf("File was succesfully moved to: '%s'", archiveRemotePath)
 	}
 
-	//
 	log.Printf("Setting primary from: '%s' to: '%s' ", tmpRemotePath, remoteFilePath)
 	_, err = moveFile(sp.accessToken, tmpRemotePath, remoteFilePath)
 	if err != nil {
@@ -128,8 +117,7 @@ func (sp DropboxStorageProvider) UploadFile(backupFilePath string, remoteFilePat
 	}
 	log.Printf("Primary Backup File was succesfully set at: '%s'", remoteFilePath)
 
-	uploadFilePath = remoteFilePath
-	return
+	return remoteFilePath, nil
 }
 
 func (sp DropboxStorageProvider) DeleteFile(remoteFilePath string) (deleteFilePath string, err error) {
@@ -163,7 +151,7 @@ func (sp DropboxStorageProvider) DeleteFile(remoteFilePath string) (deleteFilePa
 
 	log.Printf("File: '%s' was succesfully deleted", remoteFilePath)
 
-	return
+	return remoteFilePath, nil
 }
 
 func (sp DropboxStorageProvider) AgeFile(remoteFilePath string) (ageOfFile int, err error) {
@@ -211,8 +199,7 @@ func (sp DropboxStorageProvider) AgeFile(remoteFilePath string) (ageOfFile int, 
 	timeDiffInDays := int(timeNow.Sub(lastModifiedTime.UTC()).Hours() / 24)
 	log.Printf("Age of file was: '%d' day(s) ", timeDiffInDays)
 
-	ageOfFile = timeDiffInDays
-	return
+	return timeDiffInDays, nil
 }
 
 func uploadFile(accessToken, backupFilePath, remoteFilePath string) (outputFilePath string, err error) {
@@ -266,7 +253,7 @@ func uploadFile(accessToken, backupFilePath, remoteFilePath string) (outputFileP
 		return "", fmt.Errorf("Error uploading file, statusCode: %d, status: %s", response.StatusCode, response.Status)
 	}
 
-	return
+	return remoteFilePath, nil
 }
 
 func moveFile(accessToken, fromPath, toPath string) (outputFilePath string, err error) {
@@ -298,9 +285,14 @@ func moveFile(accessToken, fromPath, toPath string) (outputFilePath string, err 
 		return "", fmt.Errorf("Error moving file, statusCode: %d, status: %s", response.StatusCode, response.Status)
 	}
 
-	return
+	return toPath, nil
 }
 
 func NewDropboxStorageClient(backupProviderToken string) storage.StorageProvider {
+
+	if backupProviderToken == "" {
+		log.Fatalln("Error: No Access token provided for storage provider dropbox")
+	}
+
 	return &DropboxStorageProvider{accessToken: backupProviderToken}
 }
