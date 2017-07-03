@@ -3,8 +3,8 @@ package storage
 import (
 	"testing"
 	"os"
-	"github.com/opinari/freighter/dropbox"
-	"github.com/opinari/freighter/github"
+	"github.com/opinari/freighter/storage/dropbox"
+	"github.com/opinari/freighter/storage/github"
 )
 
 const arbitrary_restore_file_path = "/foo/bar"
