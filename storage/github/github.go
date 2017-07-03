@@ -32,7 +32,7 @@ type GithubContentsResponse struct {
 	Content  string
 }
 
-func (sp GithubStorageProvider) DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePath string, err error) {
+func (sp GithubStorageProvider) DownloadFile(remoteFilePath string, restoreFilePath string) (downloadFilePath string, err error) {
 
 	// Determine file vs directory
 	isDir := filepath.Ext(remoteFilePath) == ""

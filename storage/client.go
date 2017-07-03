@@ -1,16 +1,15 @@
-package client
+package storage
 
 import (
-	"log"
-	"os"
+	"fmt"
 	"github.com/opinari/freighter/archive"
 	"github.com/opinari/freighter/compress"
-	"github.com/opinari/freighter/storage"
 	"io/ioutil"
-	"strconv"
-	"fmt"
-	"errors"
+	"log"
+	"os"
 	"path/filepath"
+	"strconv"
+	"errors"
 )
 
 // StorageClient abstracts the basic IO orchestration operations from a StorageProvider
@@ -18,9 +17,9 @@ import (
 // The storage client orchestrates operations like compression / archival etc which may be applicable
 // regardless of the underlying StorageProvider.
 type StorageClient interface {
-	RestoreFile(restoreFilePath string, remoteFilePath string) error
+	RestoreFile(remoteFilePath string, restoreFilePath string) error
 	BackupDirectory(backupFilePath string, remoteFilePath string) error
-	AgeRemoteFile(outputFilePath string, remoteFilePath string) error
+	AgeRemoteFile(remoteFilePath string, outputFilePath string) error
 	DeleteRemoteFile(remoteFilePath string) error
 }
 
@@ -28,12 +27,12 @@ type StorageClient interface {
 //
 // Standard permissions are assumed for writing files / directories.
 type FilesystemStorageClient struct {
-	storageProvider storage.StorageProvider
+	storageProvider StorageProvider
 	compressors     []compress.Compressor
 	archivers       []archive.Archiver
 }
 
-func (sc *FilesystemStorageClient) RestoreFile(restoreFilePath string, remoteFilePath string) error {
+func (sc *FilesystemStorageClient) RestoreFile(remoteFilePath string, restoreFilePath string) error {
 
 	if restoreFilePath[:1] != "/" && restoreFilePath[:1] != "~" {
 		return errors.New("Restore path must refer to an absolute filesystem path")
@@ -51,7 +50,7 @@ func (sc *FilesystemStorageClient) RestoreFile(restoreFilePath string, remoteFil
 
 	//  Download File
 	log.Printf("Downloading file from: '%s' to: '%s'", remoteFilePath, restoreFilePath)
-	downloadedFilePath, err := sc.storageProvider.DownloadFile(restoreFilePath, remoteFilePath)
+	downloadedFilePath, err := sc.storageProvider.DownloadFile(remoteFilePath, restoreFilePath)
 	if err != nil {
 		return err
 	}
@@ -124,11 +123,7 @@ func (sc *FilesystemStorageClient) BackupDirectory(backupFilePath string, remote
 	return nil
 }
 
-func (sc *FilesystemStorageClient) AgeRemoteFile(outputFilePath string, remoteFilePath string) error {
-
-	if outputFilePath[:1] != "/" && outputFilePath[:1] != "~" {
-		return errors.New("age output path must be populated and refer to an absolute filesystem path")
-	}
+func (sc *FilesystemStorageClient) AgeRemoteFile(remoteFilePath string, outputFilePath string) error {
 
 	// Perform age lookup
 	age, err := sc.storageProvider.AgeFile(remoteFilePath)
@@ -136,17 +131,24 @@ func (sc *FilesystemStorageClient) AgeRemoteFile(outputFilePath string, remoteFi
 		return err
 	}
 
-	// Create and open the output file for writing
-	outputFile, err := os.Create(outputFilePath)
-	if err != nil {
-		return err
-	}
-	defer outputFile.Close()
+	if outputFilePath != "" {
 
-	// Write out age value to file
-	ageBytes := []byte(strconv.Itoa(age))
-	if err := ioutil.WriteFile(outputFilePath, ageBytes, 0666); err != nil {
-		return err
+		if outputFilePath[:1] != "/" && outputFilePath[:1] != "~" {
+			return fmt.Errorf("age output path must be populated and refer to an absolute filesystem path")
+		}
+
+		// Create and open the output file for writing
+		outputFile, err := os.Create(outputFilePath)
+		if err != nil {
+			return err
+		}
+		defer outputFile.Close()
+
+		// Write out age value to file
+		ageBytes := []byte(strconv.Itoa(age))
+		if err := ioutil.WriteFile(outputFilePath, ageBytes, 0666); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -156,7 +158,7 @@ func (sc *FilesystemStorageClient) DeleteRemoteFile(remoteFilePath string) error
 
 	_, err := sc.storageProvider.DeleteFile(remoteFilePath)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	return nil

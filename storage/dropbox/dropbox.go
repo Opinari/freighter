@@ -38,7 +38,7 @@ type DropboxMoveOptions struct {
 	RemoteFileToPath   string `json:"to_path"`
 }
 
-func (sp DropboxStorageProvider) DownloadFile(restoreFilePath string, remoteFilePath string) (downloadFilePath string, err error) {
+func (sp DropboxStorageProvider) DownloadFile(remoteFilePath string, restoreFilePath string) (downloadFilePath string, err error) {
 
 	// Construct API File Path in required json format
 	apiPath := DropboxOptions{RemoteFilePath: remoteFilePath}

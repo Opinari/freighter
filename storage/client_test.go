@@ -1,4 +1,4 @@
-package client
+package storage
 
 import (
 	"testing"
@@ -32,7 +32,7 @@ func TestRestoreFile(t *testing.T) {
 	storageClient := NewStorageClient(sp)
 
 	restoreFilePath := os.TempDir() + arbitrary_restore_file_path
-	err := storageClient.RestoreFile(restoreFilePath, arbitrary_remote_file_path)
+	err := storageClient.RestoreFile(arbitrary_remote_file_path, restoreFilePath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +46,7 @@ func TestRestoreFile_SingleFromDropbox(t *testing.T) {
 	sp := dropbox.NewDropboxStorageClient(dropbox_acccess_token)
 	storageClient := NewStorageClient(sp)
 
-	err := storageClient.RestoreFile(real_dropbox_restore_dir_path, real_dropbox_remote_single_file_path)
+	err := storageClient.RestoreFile(real_dropbox_remote_single_file_path, real_dropbox_restore_dir_path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func TestRestoreFile_ArchiveFromDropbox(t *testing.T) {
 	sp := dropbox.NewDropboxStorageClient(dropbox_acccess_token)
 	storageClient := NewStorageClient(sp)
 
-	err := storageClient.RestoreFile(real_dropbox_restore_dir_path, real_dropbox_remote_archive_file_path)
+	err := storageClient.RestoreFile(real_dropbox_remote_archive_file_path, real_dropbox_restore_dir_path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestRestoreFile_SingleFromGithub(t *testing.T) {
 	sp := github.NewGithubStorageProvider(github_oauth_token)
 	storageClient := NewStorageClient(sp)
 
-	err := storageClient.RestoreFile(real_github_restore_file_path, real_github_remote_single_file_path)
+	err := storageClient.RestoreFile(real_github_remote_single_file_path, real_github_restore_file_path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +88,7 @@ func TestRestoreFile_ArchiveFromGithub(t *testing.T) {
 	sp := dropbox.NewDropboxStorageClient(dropbox_acccess_token)
 	storageClient := NewStorageClient(sp)
 
-	err := storageClient.RestoreFile(real_dropbox_restore_dir_path, real_dropbox_remote_archive_file_path)
+	err := storageClient.RestoreFile(real_dropbox_remote_archive_file_path, real_dropbox_restore_dir_path)
 	if err != nil {
 		t.Fatal(err)
 	}
