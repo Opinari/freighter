@@ -26,7 +26,7 @@ func TestDownloadFile_ForIndividualFile(t *testing.T) {
 
 	tmpRestorePath := os.TempDir() + outputFilename
 
-	outputPath, err := sp.DownloadFile(tmpRestorePath, exampleRealPublicFilePath)
+	outputPath, err := sp.DownloadFile(exampleRealPublicFilePath, tmpRestorePath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +70,7 @@ func TestDownloadFile_ForDirectory(t *testing.T) {
 
 			tmpRestorePath := os.TempDir() + "test.file"
 
-			_, err := sp.DownloadFile(tmpRestorePath, path)
+			_, err := sp.DownloadFile(path, tmpRestorePath)
 			if err == nil {
 				t.Fatal("unsupported error for directories expected")
 			}

@@ -22,7 +22,7 @@ func TestDownloadFile(t *testing.T) {
 
 	for _, test := range tests {
 
-		_, err := sp.DownloadFile(test.restoreFilePath, test.remoteFilePath)
+		_, err := sp.DownloadFile(test.remoteFilePath, test.restoreFilePath)
 
 		if err.Error() != "foo" {
 			t.Fail()
