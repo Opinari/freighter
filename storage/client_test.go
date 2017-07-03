@@ -1,8 +1,9 @@
-package storage
+package storage_test
 
 import (
 	"testing"
 	"os"
+	"github.com/opinari/freighter/storage"
 	"github.com/opinari/freighter/storage/dropbox"
 	"github.com/opinari/freighter/storage/github"
 )
@@ -29,7 +30,7 @@ func TestRestoreFile(t *testing.T) {
 	t.SkipNow()
 
 	sp := &fakeStorageProvider{}
-	storageClient := NewStorageClient(sp)
+	storageClient := storage.NewStorageClient(sp)
 
 	restoreFilePath := os.TempDir() + arbitrary_restore_file_path
 	err := storageClient.RestoreFile(arbitrary_remote_file_path, restoreFilePath)
@@ -44,7 +45,7 @@ func TestRestoreFile_SingleFromDropbox(t *testing.T) {
 	t.SkipNow()
 
 	sp := dropbox.NewDropboxStorageClient(dropbox_acccess_token)
-	storageClient := NewStorageClient(sp)
+	storageClient := storage.NewStorageClient(sp)
 
 	err := storageClient.RestoreFile(real_dropbox_remote_single_file_path, real_dropbox_restore_dir_path)
 	if err != nil {
@@ -58,7 +59,7 @@ func TestRestoreFile_ArchiveFromDropbox(t *testing.T) {
 	t.SkipNow()
 
 	sp := dropbox.NewDropboxStorageClient(dropbox_acccess_token)
-	storageClient := NewStorageClient(sp)
+	storageClient := storage.NewStorageClient(sp)
 
 	err := storageClient.RestoreFile(real_dropbox_remote_archive_file_path, real_dropbox_restore_dir_path)
 	if err != nil {
@@ -72,7 +73,7 @@ func TestRestoreFile_SingleFromGithub(t *testing.T) {
 	t.SkipNow()
 
 	sp := github.NewGithubStorageProvider(github_oauth_token)
-	storageClient := NewStorageClient(sp)
+	storageClient := storage.NewStorageClient(sp)
 
 	err := storageClient.RestoreFile(real_github_remote_single_file_path, real_github_restore_file_path)
 	if err != nil {
@@ -86,7 +87,7 @@ func TestRestoreFile_ArchiveFromGithub(t *testing.T) {
 	t.SkipNow()
 
 	sp := dropbox.NewDropboxStorageClient(dropbox_acccess_token)
-	storageClient := NewStorageClient(sp)
+	storageClient := storage.NewStorageClient(sp)
 
 	err := storageClient.RestoreFile(real_dropbox_remote_archive_file_path, real_dropbox_restore_dir_path)
 	if err != nil {
