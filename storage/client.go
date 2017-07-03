@@ -222,7 +222,7 @@ func cleanupIntermediateFile(path string) error {
 	return nil
 }
 
-func NewStorageClient(sp storage.StorageProvider) StorageClient {
+func NewStorageClient(sp StorageProvider) StorageClient {
 
 	// Instantiating the available compressors / archivers here for now, wouldn't DI be nice!
 	compressors := []compress.Compressor{compress.NewGzipCompressor()}
