@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/mitchellh/go-homedir"
 	"github.com/opinari/freighter/storage"
 	"github.com/opinari/freighter/storage/dropbox"
 	"github.com/opinari/freighter/storage/github"
@@ -44,7 +43,7 @@ func init() {
 
 	cobra.OnInitialize(initConfig)
 
-	RootCmd.PersistentFlags().StringVar(&configFile, "config", "", "configuration file (default $HOME/.freighter.yml)")
+	RootCmd.PersistentFlags().StringVar(&configFile, "config", "", "configuration file (default /tmp/.freighter.yml)")
 	RootCmd.Flags().BoolP("version", "v", false, "print freighter's version")
 }
 
@@ -55,14 +54,8 @@ func initConfig() {
 	if configFile != "" {
 		viper.SetConfigFile(configFile)
 	} else {
-
-		home, err := homedir.Dir()
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		// Search config in home directory with name ".freighter" (without extension).
-		viper.AddConfigPath(home)
+		// Search config in tmp directory with name ".freighter" (without extension).
+		viper.AddConfigPath(os.TempDir())
 		viper.SetConfigName(".freighter")
 	}
 
