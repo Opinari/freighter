@@ -48,7 +48,8 @@ func init() {
 }
 
 // Read in configuration file containing provider type and access token.
-// Avoid using environment variables as they are easily leaked.
+// Fall back to using environment variables if the configuration file is
+// not found.
 func initConfig() {
 
 	if configFile != "" {
@@ -59,13 +60,14 @@ func initConfig() {
 		viper.SetConfigName(".freighter")
 	}
 
-	err := viper.ReadInConfig()
-	if err != nil {
-		log.Fatalln(err)
-	}
+	// Check for environment variables in all caps prefixed with freighter
+	// as a fallback strategy if reading the configuration file fails.
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("freighter")
+	viper.ReadInConfig()
 
-	if !viper.InConfig("provider") || !viper.InConfig("token") {
-		log.Fatalln("Configuration file must contain the following keys: provider, token")
+	if viper.GetString("provider") == "" || viper.GetString("token") == "" {
+		log.Fatalln("Provider and/or token not found in either configuration file or environment variables")
 	}
 
 	storageProvider := resolveStorageProvider(viper.GetString("provider"), viper.GetString("token"))
